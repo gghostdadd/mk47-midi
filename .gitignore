@@ -1,0 +1,8 @@
+# Build output
+/*.bin
+.build/
+
+# Old builds and the factory firmware dump stay local only
+previous-builds/
+
+.DS_Store
