@@ -9,6 +9,7 @@ Build and flash from the project root: `make build`, then `make flash` with the
 keyboard in bootloader mode (hold the top-left key while plugging in).
 
 QMK Toolbox is also handy if you'd like to flash the prebuilt .bin file: https://qmk.fm/toolbox
+The latest prebuilt `inland_mk47_midiboard.bin` is on the releases page: https://github.com/gghostdadd/mk47-midi/releases/latest
 
 ## Layer 0 - Chromatic layout (default)
 

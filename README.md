@@ -31,6 +31,10 @@ make flash    # builds, then flashes; keyboard must be in bootloader mode
 
 Bootloader mode: hold the top-left key while plugging in the keyboard.
 
+Prebuilt firmware: download `inland_mk47_midiboard.bin` from the
+[latest release](https://github.com/gghostdadd/mk47-midi/releases/latest) and
+flash it with [QMK Toolbox](https://qmk.fm/toolbox), no build environment needed.
+
 ## Testing the MIDI lighting
 
 `tools/mk47test.swift` sends note-ons to the keyboard from macOS:
