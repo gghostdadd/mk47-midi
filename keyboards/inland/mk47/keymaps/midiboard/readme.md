@@ -23,7 +23,7 @@ Each row is one octave, C to B. Lowest octave at the bottom.
 +------+------+------+------+------+------+------+------+------+------+------+------+
 |  C2  | C#2  |  D2  | D#2  |  E2  |  F2  | F#2  |  G2  | G#2  |  A2  | A#2  |  B2  |
 +------+------+------+------+------+------+------+------+------+------+------+------+
-|  C1  | C#1  |  D1  | D#1  |  E1  |    ENTER    |  G1  | G#1  |  A1  | A#1  |SHIFT |
+|  C1  | C#1  |  D1  | D#1  |  E1  | ENTER/SPACE |  G1  | G#1  |  A1  | A#1  |SHIFT |
 +------+------+------+------+------+-------------+------+------+------+------+------+
 ```
 
@@ -55,7 +55,7 @@ held, the function keys light up colour-coded by group.
 +------+------+------+------+------+------+------+------+------+------+------+------+
 | HUE+ | CH-  | CH+  |      |      |      |LEDOFF| FX-  | FX+  | BRI- | BRI+ |LIGHT |
 +------+------+------+------+------+------+------+------+------+------+------+------+
-|LSEM- |LSEM+ |LOCT- |LOCT+ |      |      |      |      |      |      |      |      |
+|LSEM- |LSEM+ |LOCT- |LOCT+ |      |ENT/SP|      |      |      |      |      |      |
 +------+------+------+------+------+------+------+------+------+------+------+------+
 |KOCT- |KOCT+ | HALF |DOUBLE|CLEAR |    PLAY     |      |      | UNDO |REC/OV|(held)|
 +------+------+------+------+------+-------------+------+------+------+------+------+
@@ -71,6 +71,7 @@ held, the function keys light up colour-coded by group.
 | CH- / CH+ | Step the MIDI channel down / up |
 | KOCT- / KOCT+ | Shift the whole keyboard down / up an octave |
 | BASS | Switch between chromatic and bass guitar layouts |
+| ENT/SP | Switch the wide key on the chromatic layout between Enter and Space. Starts as Enter when plugged in; the key lights teal for Enter, yellow for Space while shift is held. |
 
 ### Looper
 

@@ -34,6 +34,7 @@ enum custom_keycodes {
     LP_UNDO,             // remove the most recent overdub
     KB_PIANO,            // toggle the piano-key lighting
     KB_LEDOFF,           // clear every colour set over MIDI
+    KB_SPACE,            // toggle the wide key between Enter and Space
 };
 
 // clang-format off
@@ -61,7 +62,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
         MI_CH1, MI_CH2,   MI_CH3,   MI_CH4,   MI_CH5,   MI_CH6,   MI_CH7,   MI_CH8,   MI_CH9,   MI_CH10,   TG(1),  RGB_MOD,
         RGB_HUI, MI_CHND, MI_CHNU, KC_TRNS, KC_TRNS, KC_TRNS, KB_LEDOFF, RGB_SPD, RGB_SPI, RGB_VAD, RGB_VAI, KB_PIANO,
-        LP_STD,  LP_STU,  LP_TRD,  LP_TRU,  KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
+        LP_STD,  LP_STU,  LP_TRD,  LP_TRU,  KC_TRNS, KB_SPACE, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS, KC_TRNS,
         MI_OCTD, MI_OCTU, LP_SLOW, LP_FAST, LP_CLR,      LP_PLAY,      KC_TRNS, KC_TRNS, LP_UNDO, LP_REC,  KC_NO
 )
 
@@ -338,7 +339,22 @@ void housekeeping_task_user(void) {
     }
 }
 
+// The wide key on the chromatic layout sends Enter, or Space once toggled.
+// Off (Enter) at power-up.
+static bool     wide_key_is_space;
+static uint16_t wide_key_down; // what the press sent, so the release matches
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (keycode == KC_ENT) {
+        if (record->event.pressed) {
+            wide_key_down = wide_key_is_space ? KC_SPC : KC_ENT;
+            register_code(wide_key_down);
+        } else {
+            unregister_code(wide_key_down);
+        }
+        return false;
+    }
+
     if (keycode >= MIDI_TONE_MIN && keycode <= MIDI_TONE_MAX) {
         // Mirror QMK's own bookkeeping; it sends the live note after we return.
         uint8_t tone = keycode - MIDI_TONE_MIN;
@@ -365,7 +381,7 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         return true;
     }
 
-    if (keycode < LP_REC || keycode > KB_LEDOFF) {
+    if (keycode < LP_REC || keycode > KB_SPACE) {
         return true;
     }
     if (!record->event.pressed) {
@@ -444,6 +460,9 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         case KB_LEDOFF: // for colours left behind when the host goes away
             memset(note_color, 0, sizeof(note_color));
             break;
+        case KB_SPACE:
+            wide_key_is_space = !wide_key_is_space;
+            break;
     }
     return false;
 }
@@ -471,6 +490,9 @@ static bool legend_color(uint16_t keycode, rgb_led_t *color) {
             return true;
         case KB_LEDOFF:
             *color = (rgb_led_t){.r = 255, .g = 0, .b = 40};
+            return true;
+        case KB_SPACE: // teal while the wide key sends Enter, soft yellow for Space
+            *color = wide_key_is_space ? (rgb_led_t){.r = 255, .g = 200, .b = 60} : (rgb_led_t){.r = 0, .g = 160, .b = 160};
             return true;
         case RGB_MOD:
         case RGB_HUI:
