@@ -1,15 +1,19 @@
 # Inland MK47 - `midiboard` keymap
 
-A MIDI keyboard layout with a built-in looper, lighting that responds to
-incoming MIDI (great for Resolume), and some other lighting options.
+A MIDI keyboard layout with a built-in loop sequencer, lighting that responds to
+incoming MIDI (great for Resolume), and additional lighting options.
 
-The space bar is...for right...the enter key.  Also handy for how I use Resolume.  
+The space bar is the ENTER key on startup (also handy for how I use Resolume). To change it to SPACE see below. 
 
 Build and flash from the project root: `make build`, then `make flash` with the
 keyboard in bootloader mode (hold the top-left key while plugging in).
 
 QMK Toolbox is also handy if you'd like to flash the prebuilt .bin file: https://qmk.fm/toolbox
+Hold the top-left key while plugging in and select MK47 in QMK Toolbox to flash firmware file.  
+
 The latest prebuilt `inland_mk47_midiboard.bin` is on the releases page: https://github.com/gghostdadd/mk47-midi/releases/latest
+
+Keyboard Layout:
 
 ## Layer 0 - Chromatic layout (default)
 
@@ -47,7 +51,7 @@ Enter key becomes A.
 ## Layer 2 - Shift (hold the bottom-right key)
 
 Blank keys do nothing extra here: they still play their note. While shift is
-held, the function keys light up colour-coded by group.
+held, the function keys light up in colors.
 
 ```
 +------+------+------+------+------+------+------+------+------+------+------+------+
@@ -65,9 +69,7 @@ held, the function keys light up colour-coded by group.
 
 ### MIDI
 
-| Key | What it does |
-|---|---|
-| CH1-CH10 | Send on that MIDI channel |
+| CH1-CH10 | Change controller to that MIDI channel |
 | CH- / CH+ | Step the MIDI channel down / up |
 | KOCT- / KOCT+ | Shift the whole keyboard down / up an octave |
 | BASS | Switch between chromatic and bass guitar layouts |
@@ -75,9 +77,10 @@ held, the function keys light up colour-coded by group.
 
 ### Looper
 
-| Key | What it does |
-|---|---|
-| REC/OV | Record / overdub. No loop: arm, recording starts on your first note; press again to loop it. Loop playing: punch in / out of overdub. Loop stopped: start it with overdub on. |
+| REC/OV | Record / overdub. No loop: arm, recording starts on your first note; press SHIFT and REC/OV again to loop it. 
+  While loops is playing: punch in / out of overdub. 
+  Loop recorded but stopped: start it with overdub on.
+  
 | PLAY | Stop the loop / start it again from the top |
 | CLEAR | Stop and erase the loop |
 | UNDO | Remove the most recent overdub (repeat for earlier ones) |
@@ -87,14 +90,12 @@ held, the function keys light up colour-coded by group.
 
 ### Lights
 
-| Key | What it does |
-|---|---|
-| LEDOFF | Clear every colour set over MIDI, on all channels (for lights left hanging in Resolume) |
+| LEDOFF | Clear every color set over MIDI, on all channels (for if lights are left hanging in Resolume) |
 | LIGHT | Toggle guide lighting. Chromatic layout: white keys lit, black keys dark, C in blue. Bass guitar layout: fret dots (see below). |
-| RGBMOD | Next RGB mode: dark Resolume mode first, then the built-in effects |
-| HUE+ | Shift the effect colour |
-| BRI- / BRI+ | Brightness down / up |
-| FX- / FX+ | Effect animation speed down / up |
+| RGBMOD | Next RGB mode: dark Resolume mode first, then the built-in pretty color effects.  These come stock on the keyboard but they are fun! |
+| HUE+ | Shift the RGB mode effect color |
+| BRI- / BRI+ | LED Brightness down / up |
+| FX- / FX+ | RGB mode effect animation speed down / up |
 
 ## Guide lighting on the chromatic layout
 
@@ -119,8 +120,7 @@ and blank keys are the black keys (dark). Enter and shift stay dark.
 
 Each column is a fret, with the open strings in the left column, so the guide
 lighting marks it like a bass neck: `o` is an open string (amber) and `*` is a
-fret dot (white) at frets 3, 5, 7 and 9. Fret 12 would be one key past the
-right edge.
+fret dot (white) at frets 3, 5, 7 and 9.
 
 ```
  fret:  0      1      2      3      4      5      6      7      8      9     10     11
@@ -135,25 +135,23 @@ right edge.
      +------+------+------+------+------+-------------+------+------+------+------+------+
 ```
 
-## Bottom-right key light (looper status)
+## Bottom-right SHIFT key light (looper status)
 
-| Light | Meaning |
-|---|---|
 | Blinking red | Armed, waiting for the first note |
 | Solid red | Recording or overdubbing |
 | Green | Loop playing |
 | Amber | Loop stopped, still in memory |
 | Dark | No loop |
 
-## Lighting from MIDI
+## Lighting keys from MIDI input
 
-A note-on sent to the keyboard lights every key currently playing that note.
-The velocity picks the colour from the Launchpad 128-colour palette, velocity 0
-turns it off, and note-offs are ignored. Colours are kept per MIDI channel and
+A note-on sent to the keyboard lights every key currently assigned that note.
+The velocity of that note output picks the color from the Launchpad 128-color palette.  Velocity 0
+turns it off, and note-offs are ignored. Colors are kept per MIDI channel and
 shown for the channel the keyboard is sending on.
 
 ## Notes
 
 - Note names above are QMK's, as written in `keymap.c`. They sit lower than the
   usual naming: QMK's C1 is MIDI note 60 (middle C) at the default octave.
-- This file is written by hand. Update it when the layers in `keymap.c` change.
+- This file is written by hand. It will need updating if the layers in `keymap.c` change.
