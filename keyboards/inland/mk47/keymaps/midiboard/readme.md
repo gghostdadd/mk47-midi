@@ -1,7 +1,7 @@
 # Inland MK47 - `midiboard` keymap
 
 A MIDI keyboard layout with a built-in loop sequencer, lighting that responds to
-incoming MIDI (great for Resolume), and additional lighting options.
+incoming MIDI, and additional lighting options.
 
 The space bar is the ENTER key on startup (also handy for how I use Resolume). To change it to SPACE see below. 
 
@@ -70,16 +70,16 @@ held, the function keys light up in colors.
 ### MIDI
 
 | CH1-CH10 | Change controller to that MIDI channel |
-| CH- / CH+ | Step the MIDI channel down / up |
-| KOCT- / KOCT+ | Shift the whole keyboard down / up an octave |
-| BASS | Switch between chromatic and bass guitar layouts |
-| ENT/SP | Switch the wide key on the chromatic layout between Enter and Space. Starts as Enter when plugged in; the key lights teal for Enter, yellow for Space while shift is held. |
+<br>| CH- / CH+ | Step the MIDI channel down / up |
+<br>| KOCT- / KOCT+ | Shift the whole keyboard down / up an octave |
+<br>| BASS | Switch between chromatic and bass guitar layouts |
+<br>| ENT/SP | Switch the wide key on the chromatic layout between Enter and Space. Starts as Enter when plugged in; the key lights teal for Enter, yellow for Space while shift is held. |
 
 ### Looper
 
 | REC/OV | Record / overdub. No loop: arm, recording starts on your first note; press SHIFT and REC/OV again to loop it. 
-  While loops is playing: punch in / out of overdub. 
-  Loop recorded but stopped: start it with overdub on.
+<br>  While loops is playing, hit record again for punch in / out of overdub. 
+<br>  Loop recorded but stopped: start it with overdub on.
   
 <br>| PLAY | Stop the loop / start it again from the top |
 <br>| CLEAR | Stop and erase the loop |
