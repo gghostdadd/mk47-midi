@@ -81,7 +81,7 @@ held, the function keys light up in colors.
   While loops is playing: punch in / out of overdub. 
   Loop recorded but stopped: start it with overdub on.
   
-| PLAY | Stop the loop / start it again from the top |
+<br>| PLAY | Stop the loop / start it again from the top |
 | CLEAR | Stop and erase the loop |
 | UNDO | Remove the most recent overdub (repeat for earlier ones) |
 | HALF / DOUBLE | Halve / double the loop speed (up to 5 times each way) |
