@@ -82,20 +82,20 @@ held, the function keys light up in colors.
   Loop recorded but stopped: start it with overdub on.
   
 <br>| PLAY | Stop the loop / start it again from the top |
-| CLEAR | Stop and erase the loop |
-| UNDO | Remove the most recent overdub (repeat for earlier ones) |
-| HALF / DOUBLE | Halve / double the loop speed (up to 5 times each way) |
-| LOCT- / LOCT+ | Transpose the loop down / up an octave |
-| LSEM- / LSEM+ | Transpose the loop down / up a semitone |
+<br>| CLEAR | Stop and erase the loop |
+<br>| UNDO | Remove the most recent overdub (repeat for earlier ones) |
+<br>| HALF / DOUBLE | Halve / double the loop speed (up to 5 times each way) |
+<br>| LOCT- / LOCT+ | Transpose the loop down / up an octave |
+<br>| LSEM- / LSEM+ | Transpose the loop down / up a semitone |
 
 ### Lights
 
 | LEDOFF | Clear every color set over MIDI, on all channels (for if lights are left hanging in Resolume) |
-| LIGHT | Toggle guide lighting. Chromatic layout: white keys lit, black keys dark, C in blue. Bass guitar layout: fret dots (see below). |
-| RGBMOD | Next RGB mode: dark Resolume mode first, then the built-in pretty color effects.  These come stock on the keyboard but they are fun! |
-| HUE+ | Shift the RGB mode effect color |
-| BRI- / BRI+ | LED Brightness down / up |
-| FX- / FX+ | RGB mode effect animation speed down / up |
+<br>| LIGHT | Toggle guide lighting. Chromatic layout: white keys lit, black keys dark, C in blue. Bass guitar layout: fret dots (see below). |
+<br>| RGBMOD | Next RGB mode: dark Resolume mode first, then the built-in pretty color effects.  These come stock on the keyboard but they are fun! |
+<br>| HUE+ | Shift the RGB mode effect color |
+<br>| BRI- / BRI+ | LED Brightness down / up |
+<br>| FX- / FX+ | RGB mode effect animation speed down / up |
 
 ## Guide lighting on the chromatic layout
 
@@ -138,10 +138,10 @@ fret dot (white) at frets 3, 5, 7 and 9.
 ## Bottom-right SHIFT key light (looper status)
 
 | Blinking red | Armed, waiting for the first note |
-| Solid red | Recording or overdubbing |
-| Green | Loop playing |
-| Amber | Loop stopped, still in memory |
-| Dark | No loop |
+<br>| Solid red | Recording or overdubbing |
+<br>| Green | Loop playing |
+<br>| Amber | Loop stopped, still in memory |
+<br>| Dark | No loop |
 
 ## Lighting keys from MIDI input
 
