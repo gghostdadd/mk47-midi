@@ -92,7 +92,7 @@ held, the function keys light up in colors.
 
 | LEDOFF | Clear every color set over MIDI, on all channels (for if lights are left hanging in Resolume) |
 <br>| LIGHT | Toggle guide lighting. Chromatic layout: white keys lit, black keys dark, C in blue. Bass guitar layout: fret dots (see below). |
-<br>| RGBMOD | Next RGB mode: dark Resolume mode first, then the built-in pretty color effects.  These come stock on the keyboard but they are fun! |
+<br>| RGBMOD | Next RGB mode: dark mode first (midi in sets lighting), then the built-in pretty color effects. |
 <br>| HUE+ | Shift the RGB mode effect color |
 <br>| BRI- / BRI+ | LED Brightness down / up |
 <br>| FX- / FX+ | RGB mode effect animation speed down / up |
