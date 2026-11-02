@@ -1,0 +1,584 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK47 Light Test</title>
+<style>
+:root {
+  --bg: #f3f3f1; --panel: #ffffff; --text: #1c1c1c; --muted: #6b6b6b; --line: #deded9;
+  --accent: #2563eb; --accent-text: #ffffff; --ok: #15803d; --bad: #b91c1c; --warn: #a16207;
+  --case: #121214; --key: #2a2a2d; --key-text: #8c8c90; --input: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111214; --panel: #1a1b1e; --text: #e8e8e8; --muted: #9a9a9e; --line: #2d2e33;
+    --accent: #60a5fa; --accent-text: #0b1220; --ok: #4ade80; --bad: #f87171; --warn: #facc15;
+    --case: #08080a; --key: #26262a; --key-text: #7c7c82; --input: #222327;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111214; --panel: #1a1b1e; --text: #e8e8e8; --muted: #9a9a9e; --line: #2d2e33;
+  --accent: #60a5fa; --accent-text: #0b1220; --ok: #4ade80; --bad: #f87171; --warn: #facc15;
+  --case: #08080a; --key: #26262a; --key-text: #7c7c82; --input: #222327;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 920px; margin: 0 auto; padding: 24px 16px 48px; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 12px; }
+p { margin: 0 0 8px; }
+.lede { color: var(--muted); margin-bottom: 20px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.row { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: end; }
+label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); }
+label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--text); font-size: 14px; }
+select, button {
+  font: inherit; color: var(--text); background: var(--input); border: 1px solid var(--line);
+  border-radius: 8px; padding: 7px 10px; min-height: 36px;
+}
+select { min-width: 150px; max-width: 100%; }
+button { cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button.on { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+.status { padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; border: 1px solid var(--line); }
+.status.ok { border-color: var(--ok); color: var(--ok); }
+.status.bad { border-color: var(--bad); color: var(--bad); }
+.status.warn { border-color: var(--warn); color: var(--warn); }
+.stats { margin-top: 12px; font-size: 14px; color: var(--muted); }
+.stats b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.board {
+  display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px;
+  background: var(--case); padding: 12px; border-radius: 12px;
+}
+.key {
+  aspect-ratio: 1; border-radius: 6px; background: var(--key); color: var(--key-text);
+  border: 2px solid transparent; padding: 4px; cursor: pointer; min-width: 0;
+  display: flex; flex-direction: column; justify-content: space-between;
+  font-size: 11px; line-height: 1.1; user-select: none; transition: background-color .06s;
+}
+.key.wide { aspect-ratio: auto; }
+.key.nonote { cursor: default; opacity: .55; }
+.key.pressed { border-color: #ffffff; box-shadow: 0 0 0 2px #ffffff55; }
+.key .name { font-weight: 600; }
+.key .vel { align-self: flex-end; font-variant-numeric: tabular-nums; }
+.key.lit.light-bg { color: #111; }
+.key.lit.dark-bg { color: #f2f2f2; }
+.hint { font-size: 13px; color: var(--muted); margin-top: 10px; }
+
+.patterns { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+input[type=range] { width: 180px; accent-color: var(--accent); }
+
+.palette { display: grid; grid-template-columns: repeat(16, 1fr); gap: 3px; }
+.swatch { aspect-ratio: 1; border-radius: 4px; border: 2px solid transparent; cursor: pointer; padding: 0; min-height: 0; }
+.swatch.off { background: repeating-linear-gradient(45deg, #2a2a2d 0 4px, #3a3a3e 4px 8px); }
+.swatch.sel { border-color: var(--text); }
+.chosen { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 14px; }
+.chip { width: 28px; height: 28px; border-radius: 6px; border: 1px solid var(--line); }
+
+.log {
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 10px; height: 160px; overflow-y: auto; white-space: pre-wrap; margin: 0;
+}
+ol { margin: 0; padding-left: 20px; }
+ol li { margin-bottom: 6px; }
+
+@media (max-width: 640px) {
+  .board { gap: 3px; padding: 6px; }
+  .key { padding: 2px; font-size: 8px; border-radius: 4px; }
+  .key .vel { display: none; }
+  .palette { gap: 2px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <h1>MK47 Light Test</h1>
+  <p class="lede">Sends colours to the MK47 over MIDI, the same way Resolume does. Use it on any computer to check that MIDI from the computer reaches the keyboard and lights it up. Works in Chrome or Edge.</p>
+
+  <section class="panel">
+    <h2>Connection</h2>
+    <div id="status" class="status">Starting…</div>
+    <div class="row">
+      <label>Send colours to <select id="out"></select></label>
+      <label>Listen to <select id="in"></select></label>
+      <button id="rescan">Rescan ports</button>
+    </div>
+    <div class="stats">
+      Messages sent <b id="sent">0</b> · Notes from keyboard <b id="recv">0</b> · Last key pressed: <b id="last">none yet</b>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Keyboard</h2>
+    <div class="row" style="margin-bottom:14px">
+      <label>Channel
+        <select id="chan"><option value="all">All 16 channels</option></select>
+      </label>
+      <label>Layout
+        <select id="layout">
+          <option value="chromatic">Chromatic</option>
+          <option value="bass">Bass guitar</option>
+        </select>
+      </label>
+      <label>Octave (KOCT)
+        <select id="oct"></select>
+      </label>
+      <label class="check"><input type="checkbox" id="follow" checked> Follow the keyboard's channel</label>
+      <label class="check"><input type="checkbox" id="echo" checked> Light keys I press</label>
+    </div>
+    <div id="board" class="board"></div>
+    <p class="hint" id="boardhint">Click a key to paint it with the selected colour. The number on a lit key is the velocity sent.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Patterns</h2>
+    <div class="patterns" id="patterns"></div>
+    <label>Speed <input type="range" id="speed" min="1" max="30" value="10"></label>
+  </section>
+
+  <section class="panel">
+    <h2>Colour</h2>
+    <div class="chosen"><span class="chip" id="chip"></span><span id="chosen"></span></div>
+    <div class="palette" id="palette"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Log</h2>
+    <pre class="log" id="log"></pre>
+  </section>
+
+  <section class="panel">
+    <h2>If the keys don't light</h2>
+    <ol>
+      <li><b>Use Chrome or Edge</b>, and click Allow when the browser asks about MIDI devices. Safari has no MIDI support.</li>
+      <li><b>Close Resolume</b> and anything else using MIDI first. Windows lets only one program use a MIDI port at a time; if the MK47 is listed but can't be opened, another program has it.</li>
+      <li><b>Round-trip check:</b> with "Light keys I press" on, press a key on the MK47. If "Last key pressed" updates but nothing lights, the computer hears the keyboard but the keyboard isn't receiving. If "Last key pressed" doesn't update either, the browser isn't connected to the keyboard at all.</li>
+      <li><b>Several MK47s</b> plugged in show up as "MK47", "2- MK47" and so on. Pick the one you're testing, or press a key on it to see which input it is.</li>
+      <li><b>Channel:</b> the keyboard only shows colours sent on the channel it is playing on. Leave Channel on "All 16 channels" to rule this out.</li>
+      <li><b>Brightness:</b> make sure the keyboard's brightness isn't turned all the way down (shift + BRI+).</li>
+      <li><b>Old firmware:</b> builds before the MIDI-input fix ignore all incoming MIDI. Flash the latest release if nothing ever lights.</li>
+      <li><b>Works here but not in Resolume:</b> in Resolume's Preferences → MIDI, turn on Output for the MK47, and check that feedback goes out on the channel the keyboard is set to.</li>
+    </ol>
+  </section>
+</main>
+
+<script>
+// Launchpad palette, copied from launchpad_palette.h: index = velocity.
+const PALETTE = ["000000","1E1E1E","7F7F7F","FFFFFF","FF4C4C","FF0000","590000","190000","FFBD6C","FF5400","591D00",
+  "271B00","FFFF4C","FFFF00","595900","191900","88FF4C","54FF00","1D5900","142B00","4CFF4C","00FF00","005900","001900",
+  "4CFF5E","00FF19","00590D","001902","4CFF88","00FF55","00591D","001F12","4CFFB7","00FF99","005935","001912","4CC3FF",
+  "00A9FF","004152","001019","4C88FF","0055FF","001D59","000819","4C4CFF","0000FF","000059","000019","874CFF","5400FF",
+  "190064","0F0030","FF4CFF","FF00FF","590059","190019","FF4C87","FF0054","59001D","220013","FF1500","993500","795100",
+  "436400","033900","005735","00547F","0000FF","00454F","2500CC","7F7F7F","202020","FF0000","BDFF2D","AFED06","64FF09",
+  "108B00","00FF87","00A9FF","002AFF","3F00FF","7A00FF","B21A7D","402100","FF4A00","88E106","72FF15","00FF00","3BFF26",
+  "59FF71","38FFCC","5B8AFF","3151C6","877FE9","D31DFF","FF005D","FF7F00","B9B000","90FF00","835D07","392B00","144C10",
+  "0D5038","15152A","16205A","693C1C","A8000A","DE513D","D86A1C","FFE126","9EE12F","67B50F","1E1E30","DCFF6B","80FFBD",
+  "9A99FF","8E66FF","404040","757575","E0FFFF","A00000","350000","1AD000","074200","B9B000","3F3100","B35F00","4B1502"];
+
+// The firmware lifts dim palette entries so their brightest channel is at
+// least 80 of 255; the preview does the same so it matches the keys.
+const MIN_VISIBLE_LEVEL = 80;
+const SHOWN = PALETTE.map(hex => {
+  let [r, g, b] = [0, 2, 4].map(i => parseInt(hex.slice(i, i + 2), 16));
+  const peak = Math.max(r, g, b);
+  if (peak > 0 && peak < MIN_VISIBLE_LEVEL) {
+    r = Math.floor(r * MIN_VISIBLE_LEVEL / peak);
+    g = Math.floor(g * MIN_VISIBLE_LEVEL / peak);
+    b = Math.floor(b * MIN_VISIBLE_LEVEL / peak);
+  }
+  return { css: `rgb(${r},${g},${b})`, light: 0.299 * r + 0.587 * g + 0.114 * b > 150 };
+});
+
+// Bright, fully saturated palette entries in hue order, for the animations.
+const HUES = [5, 9, 13, 17, 21, 25, 29, 33, 37, 41, 45, 49, 53, 57];
+
+const NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+// Named the way the keymap readme names them: note 60 is C1.
+const noteName = n => NAMES[n % 12] + (Math.floor(n / 12) - 4);
+
+const $ = id => document.getElementById(id);
+
+// Physical keys, bottom row first. The wide key fills columns 5 and 6 of the
+// bottom row; the bottom-right key is shift.
+const KEYS = [];
+for (let row = 0; row < 4; row++) {
+  for (let col = 0; col < 12; col++) {
+    if (row === 0 && col === 6) continue;
+    KEYS.push({ row, col, wide: row === 0 && col === 5, shift: row === 0 && col === 11 });
+  }
+}
+
+// The note a key plays, matching layers 0 and 1 of keymap.c.
+function keyNote(k) {
+  if (k.shift) return null;
+  const bass = $("layout").value === "bass";
+  if (k.wide && !bass) return null; // Enter / Space on the chromatic layout
+  const base = bass ? 64 + 5 * k.row + k.col : 60 + 12 * k.row + k.col;
+  const n = base + 12 * Number($("oct").value);
+  return n >= 0 && n <= 127 ? n : null;
+}
+
+// ---- MIDI output ------------------------------------------------------------
+
+let midi = null, output = null, input = null;
+let sentCount = 0, recvCount = 0;
+let selected = 3;                          // velocity used for painting and solid patterns
+const shown = new Uint8Array(128);         // colour each note was last set to
+const lastSent = Array.from({ length: 16 }, () => new Int16Array(128).fill(-1));
+const queue = [];                          // pending [status, note, velocity] messages
+const pressed = new Set();
+
+function channels() {
+  const v = $("chan").value;
+  return v === "all" ? [...Array(16).keys()] : [Number(v)];
+}
+
+// Queue a note-on for every selected channel. Animations pass force = false so
+// unchanged keys aren't re-sent; everything else always sends.
+function setNote(note, vel, force = true) {
+  shown[note] = vel;
+  for (const ch of channels()) {
+    if (!force && lastSent[ch][note] === vel) continue;
+    lastSent[ch][note] = vel;
+    queue.push([0x90 | ch, note, vel]);
+  }
+}
+
+// Messages go out at about 3000 a second so big bursts (all notes on all 16
+// channels) don't swamp the keyboard.
+setInterval(() => {
+  if (!output) { queue.length = 0; return; }
+  for (let i = 0; i < 12 && queue.length; i++) {
+    const msg = queue.shift();
+    try {
+      output.send(msg);
+      sentCount++;
+    } catch (e) {
+      queue.length = 0;
+      setStatus("bad", `Sending failed: ${e.message}. Another program may have taken the port. Close it and click Rescan ports.`);
+      log(`send failed: ${e.message}`);
+      output = null;
+      break;
+    }
+  }
+  $("sent").textContent = sentCount;
+}, 4);
+
+// ---- UI helpers -------------------------------------------------------------
+
+function setStatus(kind, text) {
+  const el = $("status");
+  el.className = "status " + kind;
+  el.textContent = text;
+}
+
+function log(text) {
+  const el = $("log");
+  const time = new Date().toLocaleTimeString();
+  el.textContent = (`${time}  ${text}\n` + el.textContent).split("\n").slice(0, 60).join("\n");
+}
+
+// ---- Board ------------------------------------------------------------------
+
+const keyEls = [];
+function buildBoard() {
+  const board = $("board");
+  for (const k of [...KEYS].sort((a, b) => b.row - a.row || a.col - b.col)) {
+    const el = document.createElement("div");
+    el.className = "key" + (k.wide ? " wide" : "");
+    el.style.gridRow = String(4 - k.row);
+    el.style.gridColumn = k.wide ? `${k.col + 1} / span 2` : String(k.col + 1);
+    el.innerHTML = '<span class="name"></span><span class="vel"></span>';
+    el.addEventListener("click", () => {
+      const n = keyNote(k);
+      if (n === null) return;
+      stopPattern();
+      setNote(n, selected);
+      render();
+    });
+    board.appendChild(el);
+    keyEls.push({ k, el });
+  }
+}
+
+function render() {
+  for (const { k, el } of keyEls) {
+    const n = keyNote(k);
+    const v = n === null ? 0 : shown[n];
+    let name;
+    if (k.shift) name = "SHIFT";
+    else if (n === null) name = k.wide ? "ENTER" : "";
+    else name = noteName(n);
+    el.querySelector(".name").textContent = name;
+    el.querySelector(".vel").textContent = v ? v : "";
+    el.title = n === null ? name : `${noteName(n)} (MIDI note ${n})` + (v ? `, velocity ${v}` : "");
+    el.style.background = v ? SHOWN[v].css : "";
+    el.classList.toggle("lit", v > 0);
+    el.classList.toggle("light-bg", v > 0 && SHOWN[v].light);
+    el.classList.toggle("dark-bg", v > 0 && !SHOWN[v].light);
+    el.classList.toggle("nonote", n === null);
+    el.classList.toggle("pressed", n !== null && pressed.has(n));
+  }
+}
+
+// Keys in reading order for the keyboard: bottom-left first, left to right, upward.
+const playable = () => KEYS.map(k => ({ k, n: keyNote(k) })).filter(x => x.n !== null);
+
+// ---- Patterns ---------------------------------------------------------------
+
+let frameId = null, activeButton = null;
+
+function stopPattern() {
+  if (frameId !== null) cancelAnimationFrame(frameId);
+  frameId = null;
+  if (activeButton) activeButton.classList.remove("on");
+  activeButton = null;
+}
+
+// Runs fn(frame) at the speed slider's rate, skipping frames while the send
+// queue is still busy with the last one.
+function animate(fn) {
+  let frame = 0, last = 0;
+  const step = now => {
+    frameId = requestAnimationFrame(step);
+    if (now - last < 1000 / Number($("speed").value) || queue.length > 200) return;
+    last = now;
+    fn(frame++);
+    render();
+  };
+  frameId = requestAnimationFrame(step);
+}
+
+let palettePage = 0;
+
+const PATTERNS = [
+  { name: "Solid colour", run() {
+      for (const { n } of playable()) setNote(n, selected);
+  }},
+  { name: "All 128 notes", run() {
+      // Ignores layout and octave: every note gets the colour.
+      for (let n = 0; n < 128; n++) setNote(n, selected);
+  }},
+  { name: "Rainbow", animated: true, frame(f) {
+      for (const { k, n } of playable()) setNote(n, HUES[(k.col + k.row * 2 + f) % HUES.length], false);
+  }},
+  { name: "Chase", animated: true, frame(f) {
+      const keys = playable();
+      keys.forEach(({ n }, i) => setNote(n, i === f % keys.length ? selected : 0, false));
+  }},
+  { name: "Sparkle", animated: true, frame() {
+      for (const { n } of playable()) {
+        const r = Math.random();
+        if (r < 0.08) setNote(n, HUES[Math.floor(Math.random() * HUES.length)], false);
+        else if (r < 0.2) setNote(n, 0, false);
+      }
+  }},
+  { name: "Checker", animated: true, frame(f) {
+      const phase = Math.floor(f / 4) % 2;
+      for (const { k, n } of playable()) setNote(n, (k.row + k.col + phase) % 2 ? selected : 0, false);
+  }},
+  { name: "Palette pages", run(button) {
+      // Each click shows the next block of velocities, one per note (the bass
+      // layout repeats notes, and repeated keys share a colour).
+      const keys = playable().filter((x, i, all) => all.findIndex(y => y.n === x.n) === i);
+      const start = 1 + palettePage * keys.length;
+      keys.forEach(({ n }, i) => setNote(n, start + i <= 127 ? start + i : 0));
+      log(`palette page: velocities ${start}–${Math.min(127, start + keys.length - 1)}`);
+      palettePage = start + keys.length > 127 ? 0 : palettePage + 1;
+      button.textContent = `Palette pages (${palettePage + 1})`;
+  }},
+  { name: "Clear", run() {
+      for (let n = 0; n < 128; n++) setNote(n, 0);
+  }},
+];
+
+function buildPatterns() {
+  for (const p of PATTERNS) {
+    const b = document.createElement("button");
+    b.textContent = p.name;
+    b.addEventListener("click", () => {
+      const wasActive = activeButton === b;
+      stopPattern();
+      if (!output) log("not connected: pick the MK47 under Send colours to");
+      if (p.animated) {
+        if (wasActive) { log(`${p.name} stopped`); return; }
+        activeButton = b;
+        b.classList.add("on");
+        animate(p.frame);
+        log(`${p.name} started (click again to stop)`);
+      } else {
+        p.run(b);
+        render();
+        if (p.name !== "Palette pages") log(p.name);
+      }
+    });
+    $("patterns").appendChild(b);
+  }
+}
+
+// ---- Palette ----------------------------------------------------------------
+
+function buildPalette() {
+  SHOWN.forEach((c, v) => {
+    const s = document.createElement("button");
+    s.className = "swatch" + (v === 0 ? " off" : "");
+    if (v) s.style.background = c.css;
+    s.title = v ? `Velocity ${v}` : "Velocity 0 (off)";
+    s.addEventListener("click", () => selectColour(v));
+    $("palette").appendChild(s);
+  });
+  selectColour(selected);
+}
+
+function selectColour(v) {
+  selected = v;
+  [...$("palette").children].forEach((s, i) => s.classList.toggle("sel", i === v));
+  $("chip").style.background = v ? SHOWN[v].css : "";
+  $("chip").className = "chip" + (v ? "" : " swatch off");
+  $("chosen").textContent = v ? `Velocity ${v}` : "Velocity 0 (turns keys off)";
+}
+
+// ---- Ports ------------------------------------------------------------------
+
+function fillSelect(sel, ports, keep) {
+  const list = [...ports.values()];
+  sel.innerHTML = "";
+  const none = new Option(list.length ? "— none —" : "— no MIDI ports found —", "");
+  sel.add(none);
+  for (const p of list) sel.add(new Option(p.name, p.id));
+  const mk47 = list.find(p => /mk47/i.test(p.name));
+  if (keep && list.some(p => p.id === keep)) sel.value = keep;
+  else if (mk47) sel.value = mk47.id;
+  else sel.value = "";
+}
+
+async function useOutput(id) {
+  output = null;
+  queue.length = 0;
+  const port = id && midi.outputs.get(id);
+  if (!port) {
+    setStatus("warn", midi.outputs.size ? "Pick the MK47 under Send colours to." : "No MIDI outputs found. Is the MK47 plugged in? Click Rescan ports after plugging it in.");
+    return;
+  }
+  try {
+    await port.open();
+    if (port.connection !== "open") throw new Error(`port is ${port.connection}`);
+    output = port;
+    lastSent.forEach(a => a.fill(-1));
+    setStatus("ok", `Connected to ${port.name}. Pick a pattern, or press a key on the keyboard.`);
+    log(`output open: ${port.name}`);
+  } catch (e) {
+    setStatus("bad", `Couldn't open ${port.name} (${e.message}). On Windows this almost always means another program (Resolume, a DAW, MIDI-OX) already has the port. Close it and click Rescan ports.`);
+    log(`output open failed: ${port.name}: ${e.message}`);
+  }
+}
+
+async function useInput(id) {
+  if (input) input.onmidimessage = null;
+  input = null;
+  const port = id && midi.inputs.get(id);
+  if (!port) return;
+  try {
+    await port.open();
+    port.onmidimessage = onMessage;
+    input = port;
+    log(`input open: ${port.name}`);
+  } catch (e) {
+    log(`input open failed: ${port.name}: ${e.message}`);
+  }
+}
+
+function onMessage(e) {
+  const [status, note, vel] = e.data;
+  const type = status & 0xF0, ch = status & 0x0F;
+  if (type === 0x90 && vel > 0) {
+    recvCount++;
+    $("recv").textContent = recvCount;
+    $("last").textContent = `${noteName(note)} (note ${note}), channel ${ch + 1}`;
+    pressed.add(note);
+    if ($("follow").checked && $("chan").value !== String(ch)) {
+      $("chan").value = String(ch);
+      log(`following the keyboard to channel ${ch + 1}`);
+    }
+    if ($("echo").checked) setNote(note, shown[note] ? 0 : (selected || 3));
+    if (!playable().some(x => x.n === note)) {
+      $("boardhint").textContent = `Note ${note} isn't on the board above. Set Layout and Octave to match the keyboard.`;
+    }
+    render();
+  } else if (type === 0x80 || (type === 0x90 && vel === 0)) {
+    pressed.delete(note);
+    render();
+  }
+}
+
+async function rescan() {
+  if (!midi) return start();
+  const keepOut = $("out").value, keepIn = $("in").value;
+  fillSelect($("out"), midi.outputs, keepOut);
+  fillSelect($("in"), midi.inputs, keepIn);
+  await useOutput($("out").value);
+  await useInput($("in").value);
+}
+
+async function start() {
+  if (!navigator.requestMIDIAccess) {
+    setStatus("bad", "This browser has no Web MIDI support. Open this page in Chrome or Edge.");
+    return;
+  }
+  if (!window.isSecureContext) {
+    setStatus("bad", "Web MIDI needs a secure page. Open this from its https:// address (GitHub Pages).");
+    return;
+  }
+  setStatus("warn", "Asking the browser for MIDI access… click Allow if it asks.");
+  try {
+    midi = await navigator.requestMIDIAccess({ sysex: false });
+  } catch (e) {
+    setStatus("bad", `MIDI access was refused (${e.message}). Allow MIDI devices for this site in the browser's site settings, then reload.`);
+    return;
+  }
+  midi.onstatechange = e => {
+    const p = e.port;
+    if (p.connection === "pending") return;
+    log(`${p.type} ${p.name}: ${p.state}`);
+    const keepOut = $("out").value, keepIn = $("in").value;
+    fillSelect($("out"), midi.outputs, keepOut);
+    fillSelect($("in"), midi.inputs, keepIn);
+    if (p.state === "disconnected" && output && p.id === output.id) {
+      output = null;
+      setStatus("bad", `${p.name} was unplugged.`);
+    } else if (p.state === "connected" && !output && $("out").value) {
+      useOutput($("out").value);
+    }
+    if (p.state === "connected" && !input && $("in").value) useInput($("in").value);
+  };
+  await rescan();
+}
+
+// ---- Setup ------------------------------------------------------------------
+
+for (let ch = 0; ch < 16; ch++) $("chan").add(new Option(`Channel ${ch + 1}`, String(ch)));
+for (let o = -4; o <= 3; o++) {
+  $("oct").add(new Option(o === 0 ? "0 (default)" : (o > 0 ? `+${o}` : String(o)), String(o)));
+}
+$("oct").value = "0";
+
+$("out").addEventListener("change", e => useOutput(e.target.value));
+$("in").addEventListener("change", e => useInput(e.target.value));
+$("rescan").addEventListener("click", rescan);
+$("layout").addEventListener("change", render);
+$("oct").addEventListener("change", render);
+
+buildBoard();
+buildPatterns();
+buildPalette();
+render();
+start();
+</script>
+</body>
+</html>

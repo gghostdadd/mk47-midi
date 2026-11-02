@@ -37,6 +37,10 @@ flash it with [QMK Toolbox](https://qmk.fm/toolbox), no build environment needed
 
 ## Testing the MIDI lighting
 
+**Light test page:** <https://gghostdadd.github.io/mk47-midi/> sends colour
+patterns to the keyboard from any computer's browser (Chrome or Edge), with a
+round-trip check and troubleshooting steps. The page is `docs/index.html`.
+
 `tools/mk47test.swift` sends note-ons to the keyboard from macOS:
 
 ```sh
