@@ -69,33 +69,36 @@ held, the function keys light up in colors.
 
 ### MIDI
 
+| Key | What it does |
+|---|---|
 | CH1-CH10 | Change controller to that MIDI channel |
-<br>| CH- / CH+ | Step the MIDI channel down / up |
-<br>| KOCT- / KOCT+ | Shift the whole keyboard down / up an octave |
-<br>| BASS | Switch between chromatic and bass guitar layouts |
-<br>| ENT/SP | Switch the wide key on the chromatic layout between Enter and Space. Starts as Enter when plugged in; the key lights teal for Enter, yellow for Space while shift is held. |
+| CH- / CH+ | Step the MIDI channel down / up |
+| KOCT- / KOCT+ | Shift the whole keyboard down / up an octave |
+| BASS | Switch between chromatic and bass guitar layouts |
+| ENT/SP | Switch the wide key on the chromatic layout between Enter and Space. Starts as Enter when plugged in; the key lights teal for Enter, yellow for Space while shift is held. |
 
 ### Looper
 
-| REC/OV | Record / overdub. No loop: arm, recording starts on your first note; press SHIFT and REC/OV again to loop it. 
-<br>  While loops is playing, hit record again for punch in / out of overdub. 
-<br>  Loop recorded but stopped: start it with overdub on.
-  
-<br>| PLAY | Stop the loop / start it again from the top |
-<br>| CLEAR | Stop and erase the loop |
-<br>| UNDO | Remove the most recent overdub (repeat for earlier ones) |
-<br>| HALF / DOUBLE | Halve / double the loop speed (up to 5 times each way) |
-<br>| LOCT- / LOCT+ | Transpose the loop down / up an octave |
-<br>| LSEM- / LSEM+ | Transpose the loop down / up a semitone |
+| Key | What it does |
+|---|---|
+| REC/OV | Record / overdub. No loop: arm, recording starts on your first note; press SHIFT and REC/OV again to loop it.<br>While loops is playing, hit record again for punch in / out of overdub.<br>Loop recorded but stopped: start it with overdub on. |
+| PLAY | Stop the loop / start it again from the top |
+| CLEAR | Stop and erase the loop |
+| UNDO | Remove the most recent overdub (repeat for earlier ones) |
+| HALF / DOUBLE | Halve / double the loop speed (up to 5 times each way) |
+| LOCT- / LOCT+ | Transpose the loop down / up an octave |
+| LSEM- / LSEM+ | Transpose the loop down / up a semitone |
 
 ### Lights
 
+| Key | What it does |
+|---|---|
 | LEDOFF | Clear every color set over MIDI, on all channels (for if lights are left hanging in Resolume) |
-<br>| LIGHT | Toggle guide lighting. Chromatic layout: white keys lit, black keys dark, C in blue. Bass guitar layout: fret dots (see below). |
-<br>| RGBMOD | Next RGB mode: dark mode first (midi in sets lighting), then the built-in pretty color effects. |
-<br>| HUE+ | Shift the RGB mode effect color |
-<br>| BRI- / BRI+ | LED Brightness down / up |
-<br>| FX- / FX+ | RGB mode effect animation speed down / up |
+| LIGHT | Toggle guide lighting. Chromatic layout: white keys lit, black keys dark, C in blue. Bass guitar layout: fret dots (see below). |
+| RGBMOD | Next RGB mode: dark mode first (midi in sets lighting), then the built-in pretty color effects. |
+| HUE+ | Shift the RGB mode effect color |
+| BRI- / BRI+ | LED Brightness down / up |
+| FX- / FX+ | RGB mode effect animation speed down / up |
 
 ## Guide lighting on the chromatic layout
 
@@ -137,11 +140,13 @@ fret dot (white) at frets 3, 5, 7 and 9.
 
 ## Bottom-right SHIFT key light (looper status)
 
+| Light | Meaning |
+|---|---|
 | Blinking red | Armed, waiting for the first note |
-<br>| Solid red | Recording or overdubbing |
-<br>| Green | Loop playing |
-<br>| Amber | Loop stopped, still in memory |
-<br>| Dark | No loop |
+| Solid red | Recording or overdubbing |
+| Green | Loop playing |
+| Amber | Loop stopped, still in memory |
+| Dark | No loop |
 
 ## Lighting keys from MIDI input
 
