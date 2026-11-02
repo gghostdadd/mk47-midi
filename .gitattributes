@@ -1,0 +1,3 @@
+# git apply needs the patch to match QMK's LF sources, even on Windows with
+# core.autocrlf=true.
+*.patch eol=lf
