@@ -31,6 +31,12 @@ make flash    # builds, then flashes; keyboard must be in bootloader mode
 
 Bootloader mode: hold the top-left key while plugging in the keyboard.
 
+Flash from a browser: <https://gghostdadd.github.io/mk47-midi/flash.html>
+installs the latest firmware from Chrome or Edge, no tools needed (Windows needs
+the WinUSB driver once; the page explains). When making a release, run
+`make pages-firmware VERSION=<tag>` and commit `docs/firmware/` so the page
+offers the new build.
+
 Prebuilt firmware: download `inland_mk47_midiboard.bin` from the
 [latest release](https://github.com/gghostdadd/mk47-midi/releases/latest) and
 flash it with [QMK Toolbox](https://qmk.fm/toolbox), no build environment needed.

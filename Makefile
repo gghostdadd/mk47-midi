@@ -6,7 +6,7 @@ BIN := inland_mk47_$(KEYMAP).bin
 
 PATCH := $(CURDIR)/patches/midi-input-not-discarded.patch
 
-.PHONY: build clean flash patch
+.PHONY: build clean flash patch pages-firmware
 
 # Apply our QMK core patch unless it is already applied. Without it this QMK
 # version throws away incoming MIDI, so host-controlled lighting cannot work.
@@ -23,3 +23,13 @@ clean:
 flash: build
 	wb32-dfu-updater_cli --dfuse-address 0x08000000 --download "$(BIN)"
 	wb32-dfu-updater_cli --reset
+
+# Copy the built firmware into the GitHub Pages site, where the web flasher
+# (docs/flash.html) offers it as the latest version. Run it when making a
+# release, with the release's tag: make pages-firmware VERSION=v1.1.0
+pages-firmware: build
+	@test -n "$(VERSION)" || { echo "Set VERSION to the release tag, e.g. make pages-firmware VERSION=v1.1.0"; exit 1; }
+	mkdir -p docs/firmware
+	cp "$(BIN)" docs/firmware/
+	printf '{"version": "%s", "file": "%s", "size": %s, "sha256": "%s"}\n' "$(VERSION)" "$(BIN)" \
+		"$$(wc -c < "$(BIN)" | tr -d ' ')" "$$(shasum -a 256 "$(BIN)" | cut -d ' ' -f 1)" > docs/firmware/latest.json

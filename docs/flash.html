@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK47 Firmware Flasher</title>
+<style>
+:root {
+  --bg: #f3f3f1; --panel: #ffffff; --text: #1c1c1c; --muted: #6b6b6b; --line: #deded9;
+  --accent: #2563eb; --accent-text: #ffffff; --ok: #15803d; --bad: #b91c1c; --warn: #a16207;
+  --case: #121214; --key: #2a2a2d; --key-text: #8c8c90; --input: #ffffff; --track: #e6e6e2;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111214; --panel: #1a1b1e; --text: #e8e8e8; --muted: #9a9a9e; --line: #2d2e33;
+    --accent: #60a5fa; --accent-text: #0b1220; --ok: #4ade80; --bad: #f87171; --warn: #facc15;
+    --case: #08080a; --key: #26262a; --key-text: #7c7c82; --input: #222327; --track: #2a2b30;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111214; --panel: #1a1b1e; --text: #e8e8e8; --muted: #9a9a9e; --line: #2d2e33;
+  --accent: #60a5fa; --accent-text: #0b1220; --ok: #4ade80; --bad: #f87171; --warn: #facc15;
+  --case: #08080a; --key: #26262a; --key-text: #7c7c82; --input: #222327; --track: #2a2b30;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+nav { display: flex; gap: 16px; font-size: 14px; margin-bottom: 18px; }
+nav a { color: var(--accent); text-decoration: none; }
+nav a[aria-current] { color: var(--text); font-weight: 600; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 17px; margin: 0 0 10px; display: flex; gap: 10px; align-items: center; }
+.num {
+  display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--accent); color: var(--accent-text); font-size: 13px; flex: none;
+}
+p { margin: 0 0 8px; }
+.lede { color: var(--muted); margin-bottom: 20px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.panel.disabled { opacity: .5; }
+button {
+  font: inherit; color: var(--text); background: var(--input); border: 1px solid var(--line);
+  border-radius: 8px; padding: 8px 14px; min-height: 38px; cursor: pointer;
+}
+button:hover:not(:disabled) { border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 600; }
+button:disabled { cursor: not-allowed; opacity: .5; }
+.status { padding: 10px 12px; border-radius: 8px; margin-top: 12px; border: 1px solid var(--line); }
+.status:empty { display: none; }
+.status.ok { border-color: var(--ok); color: var(--ok); }
+.status.bad { border-color: var(--bad); color: var(--bad); }
+.status.warn { border-color: var(--warn); color: var(--warn); }
+.choice { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; }
+.choice input { margin-top: 4px; }
+.choice small { display: block; color: var(--muted); }
+.check { display: flex; gap: 8px; align-items: center; margin: 12px 0; }
+ol, ul { margin: 0 0 8px; padding-left: 20px; }
+li { margin-bottom: 4px; }
+code { font: 13px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+
+.mini { display: grid; grid-template-columns: repeat(12, 1fr); gap: 3px; background: var(--case); padding: 8px; border-radius: 8px; max-width: 360px; margin: 10px 0; }
+.mini span { aspect-ratio: 1; border-radius: 3px; background: var(--key); }
+.mini span.wide { grid-column: span 2; aspect-ratio: auto; }
+.mini span.hold { background: #f59e0b; box-shadow: 0 0 0 2px #fde68a; }
+
+.bar { height: 10px; background: var(--track); border-radius: 5px; overflow: hidden; margin: 14px 0 6px; }
+.bar div { height: 100%; width: 0; background: var(--accent); transition: width .1s; }
+.bar.done div { background: var(--ok); }
+.bar.failed div { background: var(--bad); }
+.progress-text { font-size: 14px; color: var(--muted); min-height: 20px; }
+.log {
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 10px; max-height: 180px; overflow-y: auto; white-space: pre-wrap; margin: 12px 0 0;
+}
+details { margin-top: 10px; }
+summary { cursor: pointer; font-weight: 600; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <nav><a href="./">Light test</a><a href="flash.html" aria-current="page">Flash firmware</a></nav>
+  <h1>MK47 Firmware Flasher</h1>
+  <p class="lede">Installs the MK47 MIDI firmware from your browser. Works in Chrome or Edge on Windows, Mac and Linux. Your brightness and other saved settings are kept.</p>
+
+  <div id="unsupported" class="status bad"></div>
+
+  <section class="panel">
+    <h2><span class="num">1</span> Put the keyboard in bootloader mode</h2>
+    <ol>
+      <li>Unplug the MK47.</li>
+      <li>Hold down the <b>top-left key</b> (highlighted below).</li>
+      <li>Keep holding it while you plug the keyboard back in, then let go.</li>
+    </ol>
+    <div class="mini" aria-hidden="true" id="mini"></div>
+    <p>In bootloader mode the lights stay off and the keys do nothing. That's expected. If the lights come on, unplug and try again.</p>
+  </section>
+
+  <section class="panel">
+    <h2><span class="num">2</span> Connect</h2>
+    <p>Click Connect and choose <b>WB Device in DFU Mode</b> from the list the browser shows.</p>
+    <button id="connect" class="primary">Connect</button>
+    <div id="connStatus" class="status"></div>
+  </section>
+
+  <section class="panel">
+    <h2><span class="num">3</span> Choose the firmware</h2>
+    <label class="choice">
+      <input type="radio" name="src" value="latest" checked>
+      <span>Latest MK47 MIDI firmware <span id="latestVersion"></span><small id="latestInfo">Checking…</small></span>
+    </label>
+    <label class="choice">
+      <input type="radio" name="src" value="file">
+      <span>A .bin file from this computer
+        <small>For example a backup this page saved, or your own build.</small>
+        <input type="file" id="file" accept=".bin">
+      </span>
+    </label>
+    <div id="fwStatus" class="status"></div>
+  </section>
+
+  <section class="panel">
+    <h2><span class="num">4</span> Flash</h2>
+    <label class="check"><input type="checkbox" id="backup" checked> Save a backup of what's on the keyboard first</label>
+    <button id="flash" class="primary" disabled>Flash firmware</button>
+    <div class="bar" id="bar"><div></div></div>
+    <div class="progress-text" id="progress">Connect the keyboard and choose firmware to start.</div>
+    <div id="flashStatus" class="status"></div>
+    <pre class="log" id="log"></pre>
+  </section>
+
+  <section class="panel">
+    <h2>Troubleshooting</h2>
+    <details>
+      <summary>Windows: the list is empty, or connecting fails</summary>
+      <p>Windows needs the WinUSB driver for the keyboard's bootloader before a browser can use it. You only do this once per computer. If this PC has flashed an MK47 with QMK Toolbox before, it already has it.</p>
+      <ol>
+        <li>Put the keyboard in bootloader mode (step 1).</li>
+        <li>Download <a href="https://zadig.akeo.ie/" target="_blank" rel="noopener">Zadig</a> and run it.</li>
+        <li>In Zadig choose <b>Options → List All Devices</b>, then pick <b>WB Device in DFU Mode</b>.</li>
+        <li>Make sure the driver on the right says <b>WinUSB</b>, then click <b>Install Driver</b> (or Replace Driver).</li>
+        <li>Come back here, reload the page and click Connect.</li>
+      </ol>
+    </details>
+    <details>
+      <summary>The browser's list doesn't show the keyboard</summary>
+      <ul>
+        <li>The keyboard isn't in bootloader mode. If its lights are on, it started normally: unplug it and hold the top-left key while plugging it in.</li>
+        <li>Try a different USB port or cable, plugged straight into the computer rather than a hub.</li>
+        <li>On Windows, install the driver (above).</li>
+        <li>On Linux, allow access with a udev rule: <code>SUBSYSTEMS=="usb", ATTRS{idVendor}=="342d", ATTRS{idProduct}=="dfa0", TAG+="uaccess"</code></li>
+      </ul>
+    </details>
+    <details>
+      <summary>Flashing stopped partway</summary>
+      <p>Don't unplug the keyboard. Click Flash again: the page writes and checks every page from the start, so a second run fixes an incomplete one. If the page lost the keyboard, reload, click Connect, and flash again.</p>
+      <p>If the keyboard was unplugged in the middle, it may no longer start, and holding the top-left key may no longer reach bootloader mode, because that key check is part of the firmware. Plug it in once while holding the key to check. If that doesn't work, it needs the chip's BOOT pin on the circuit board to recover.</p>
+    </details>
+    <details>
+      <summary>After flashing</summary>
+      <p>The keyboard restarts on its own and shows up as a MIDI keyboard again. Use the <a href="./">light test</a> to check the lighting.</p>
+    </details>
+  </section>
+</main>
+
+<script>
+// <wb32>
+// WB32 bootloader protocol, ported from WestberryTech/wb32-dfu-updater
+// (src_common/dfufwdevice.c). Each command is one bulk write; the reply is
+// one bulk read of [command, status, data...]. Numbers are little-endian.
+const WB32 = {
+  VENDOR_ID: 0x342d,
+  PRODUCT_ID: 0xdfa0,
+  FLASH_BASE: 0x08000000,
+  PAGE_SIZE: 256,
+  CHIP_ID: 0x2980,           // chip_id & 0x3FFF for the WB32FQ95 family
+  CMD_GET_INFO: 0x01,
+  CMD_ERASE: 0x5e,
+  CMD_WRITE_PAGE: 0x6a,
+  CMD_READ: 0x72,
+  CMD_RESET: 0x83,
+  STATUS: { 0x01: "bad argument", 0x11: "erase failed", 0x12: "write failed", 0x1a: "chip is read-protected", 0xff: "invalid command" },
+};
+
+class WB32Bootloader {
+  constructor(device) {
+    this.device = device;
+  }
+
+  async open() {
+    const d = this.device;
+    await d.open();
+    if (d.configuration === null) await d.selectConfiguration(1);
+    await d.claimInterface(0);
+    const eps = d.configuration.interfaces[0].alternate.endpoints;
+    this.epIn = eps.find(e => e.direction === "in").endpointNumber;
+    this.epOut = eps.find(e => e.direction === "out").endpointNumber;
+    this.packetSize = 64; // control endpoint size of a full-speed device (bMaxPacketSize0)
+  }
+
+  async close() {
+    try { await this.device.close(); } catch (e) { /* already gone */ }
+  }
+
+  static withTimeout(promise, what) {
+    let timer;
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${what}: no reply from the keyboard`)), 5000);
+    });
+    return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+  }
+
+  async command(bytes, name) {
+    const out = await WB32Bootloader.withTimeout(this.device.transferOut(this.epOut, bytes), name);
+    if (out.status !== "ok" || out.bytesWritten !== bytes.length) throw new Error(`${name}: write failed (${out.status})`);
+    // The original tool ends a write that fills whole packets with a zero-length packet.
+    if (bytes.length % this.packetSize === 0) {
+      await WB32Bootloader.withTimeout(this.device.transferOut(this.epOut, new Uint8Array(0)), name);
+    }
+    const res = await WB32Bootloader.withTimeout(this.device.transferIn(this.epIn, 1024), name);
+    if (res.status !== "ok") throw new Error(`${name}: read failed (${res.status})`);
+    const reply = new Uint8Array(res.data.buffer, res.data.byteOffset, res.data.byteLength);
+    if (reply.length < 2) throw new Error(`${name}: short reply`);
+    if (reply[1] !== 0) {
+      const why = WB32.STATUS[reply[1]] || "error";
+      throw new Error(`${name} failed: ${why} (code 0x${reply[1].toString(16).padStart(2, "0")})`);
+    }
+    return reply;
+  }
+
+  static header(cmd, size) {
+    const buf = new Uint8Array(size);
+    buf[0] = cmd;
+    return { buf, view: new DataView(buf.buffer) };
+  }
+
+  async getInfo() {
+    const reply = await this.command(new Uint8Array([WB32.CMD_GET_INFO, 0x00]), "get info");
+    const len = reply[2];
+    const data = reply.slice(3, 3 + len);
+    const v = new DataView(data.buffer);
+    return {
+      bootloaderVersion: `${data[0] >> 4}.${data[0] & 0x0f}`,
+      chipId: v.getUint32(1, true),
+      flashSize: v.getUint32(5, true),
+      sramSize: v.getUint32(9, true),
+    };
+  }
+
+  async erasePage(addr) {
+    const { buf, view } = WB32Bootloader.header(WB32.CMD_ERASE, 12);
+    view.setUint32(4, addr, true);
+    view.setUint32(8, 1, true);
+    await this.command(buf, "erase");
+  }
+
+  async writePage(addr, page) {
+    const { buf, view } = WB32Bootloader.header(WB32.CMD_WRITE_PAGE, 12 + page.length);
+    view.setUint32(4, addr, true);
+    view.setUint32(8, page.length, true);
+    buf.set(page, 12);
+    await this.command(buf, "write");
+  }
+
+  async read(addr, count) {
+    const out = new Uint8Array(count);
+    for (let done = 0; done < count; ) {
+      const n = Math.min(256, count - done);
+      const { buf, view } = WB32Bootloader.header(WB32.CMD_READ, 10);
+      view.setUint32(4, addr + done, true);
+      view.setUint16(8, n, true);
+      const reply = await this.command(buf, "read");
+      if (reply.length < 2 + n) throw new Error("read: short reply");
+      out.set(reply.subarray(2, 2 + n), done);
+      done += n;
+    }
+    return out;
+  }
+
+  async reset(delayMs = 1000) {
+    const { buf, view } = WB32Bootloader.header(WB32.CMD_RESET, 8);
+    view.setUint32(4, delayMs, true);
+    await this.command(buf, "reset");
+  }
+
+  // Writes the image from the start of flash one page at a time, the same way
+  // wb32-dfu-updater does: erase, write, read back and compare. Flash past the
+  // end of the image (where the keyboard keeps its settings) is left alone.
+  async flash(image, onProgress) {
+    const P = WB32.PAGE_SIZE;
+    const pages = Math.ceil(image.length / P);
+    for (let i = 0; i < pages; i++) {
+      const addr = WB32.FLASH_BASE + i * P;
+      const chunk = image.subarray(i * P, (i + 1) * P);
+      // A short last page keeps whatever the flash already holds after the image.
+      const page = chunk.length === P ? chunk.slice() : await this.read(addr, P);
+      page.set(chunk, 0);
+      await this.eraseWriteVerify(addr, page);
+      onProgress(i + 1, pages);
+    }
+  }
+
+  async eraseWriteVerify(addr, page) {
+    await this.erasePage(addr);
+    await this.writePage(addr, page);
+    const check = await this.read(addr, page.length);
+    for (let j = 0; j < page.length; j++) {
+      if (check[j] !== page[j]) throw new Error(`verify failed at 0x${(addr + j).toString(16)}`);
+    }
+  }
+}
+
+// Sanity checks so a wrong or damaged file is never written. Returns a list of
+// problems (empty when the image looks like MK47 firmware).
+function checkImage(image, flashSize) {
+  const problems = [];
+  if (image.length < 1024) problems.push("the file is too small to be firmware");
+  if (flashSize && image.length > flashSize) problems.push(`the file is bigger than the keyboard's flash (${flashSize} bytes)`);
+  if (image.length >= 8) {
+    const v = new DataView(image.buffer, image.byteOffset, image.byteLength);
+    const stack = v.getUint32(0, true), entry = v.getUint32(4, true);
+    if (stack < 0x20000000 || stack > 0x20040000) problems.push("it doesn't start with a valid stack address");
+    if (!(entry & 1) || entry < WB32.FLASH_BASE || entry >= WB32.FLASH_BASE + image.length) problems.push("it doesn't start with a valid entry point");
+  }
+  return problems;
+}
+
+// True if the image carries the USB product name "MK47" (stored as UTF-16).
+function mentionsMK47(image) {
+  const needle = [0x4d, 0, 0x4b, 0, 0x34, 0, 0x37, 0];
+  outer: for (let i = 0; i + needle.length <= image.length; i++) {
+    for (let j = 0; j < needle.length; j++) if (image[i + j] !== needle[j]) continue outer;
+    return true;
+  }
+  return false;
+}
+// </wb32>
+
+const $ = id => document.getElementById(id);
+let loader = null, info = null;
+let latest = null, latestImage = null, fileImage = null, fileName = "";
+let busy = false;
+
+function setStatus(id, kind, text) {
+  const el = $(id);
+  el.className = "status " + kind;
+  el.textContent = text;
+}
+
+function log(text) {
+  $("log").textContent += text + "\n";
+  $("log").scrollTop = $("log").scrollHeight;
+}
+
+function progress(fraction, text, state = "") {
+  $("bar").className = "bar " + state;
+  $("bar").firstElementChild.style.width = `${Math.round(fraction * 100)}%`;
+  $("progress").textContent = text;
+}
+
+const kb = n => `${(n / 1024).toFixed(1)} KB`;
+
+function chosenImage() {
+  return document.querySelector('input[name=src]:checked').value === "latest"
+    ? { image: latestImage, name: latest ? `${latest.file} (${latest.version})` : "" }
+    : { image: fileImage, name: fileName };
+}
+
+function updateFlashButton() {
+  const { image } = chosenImage();
+  const problems = image ? checkImage(image, info && info.flashSize) : ["no firmware chosen"];
+  $("flash").disabled = busy || !loader || problems.length > 0;
+}
+
+// ---- Firmware -------------------------------------------------------------
+
+async function sha256(bytes) {
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function loadLatest() {
+  try {
+    const res = await fetch("firmware/latest.json", { cache: "no-cache" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    latest = await res.json();
+    const bin = await fetch(`firmware/${latest.file}`, { cache: "no-cache" });
+    if (!bin.ok) throw new Error(`HTTP ${bin.status}`);
+    const image = new Uint8Array(await bin.arrayBuffer());
+    if (image.length !== latest.size || await sha256(image) !== latest.sha256) {
+      throw new Error("the downloaded file doesn't match its checksum");
+    }
+    latestImage = image;
+    $("latestVersion").textContent = `(${latest.version})`;
+    $("latestInfo").textContent = `${latest.file}, ${kb(image.length)}, checksum OK`;
+  } catch (e) {
+    $("latestInfo").textContent = location.protocol === "file:"
+      ? "Not available when this page is opened as a file from disk. Use the page on GitHub Pages, or choose a file below."
+      : `Couldn't load it: ${e.message}. Choose a file instead.`;
+  }
+  showFirmwareStatus();
+}
+
+async function onFile() {
+  const f = $("file").files[0];
+  fileImage = null;
+  fileName = "";
+  if (f) {
+    fileImage = new Uint8Array(await f.arrayBuffer());
+    fileName = f.name;
+    document.querySelector('input[name=src][value=file]').checked = true;
+  }
+  showFirmwareStatus();
+}
+
+function showFirmwareStatus() {
+  const { image, name } = chosenImage();
+  if (!image) {
+    setStatus("fwStatus", "", "");
+  } else {
+    const problems = checkImage(image, info && info.flashSize);
+    if (problems.length) setStatus("fwStatus", "bad", `${name} can't be used: ${problems.join("; ")}.`);
+    else if (!mentionsMK47(image)) setStatus("fwStatus", "warn", `${name} looks like firmware, but not MK47 firmware. Only flash it if you're sure it's for this keyboard.`);
+    else setStatus("fwStatus", "ok", `${name}: MK47 firmware, ${kb(image.length)}.`);
+  }
+  updateFlashButton();
+}
+
+// ---- Connect --------------------------------------------------------------
+
+async function connect() {
+  if (busy) return;
+  let device;
+  try {
+    device = await navigator.usb.requestDevice({ filters: [{ vendorId: WB32.VENDOR_ID, productId: WB32.PRODUCT_ID }] });
+  } catch (e) {
+    if (e.name !== "NotFoundError") setStatus("connStatus", "bad", `Couldn't connect: ${e.message}`);
+    else setStatus("connStatus", "warn", "No keyboard chosen. If the list was empty, see Troubleshooting below.");
+    return;
+  }
+  if (loader) await loader.close();
+  loader = null;
+  info = null;
+  try {
+    const l = new WB32Bootloader(device);
+    await l.open();
+    info = await l.getInfo();
+    if ((info.chipId & 0x3fff) !== WB32.CHIP_ID) {
+      await l.close();
+      throw new Error(`unexpected chip (id 0x${info.chipId.toString(16)}); this page only flashes the MK47's WB32FQ95`);
+    }
+    loader = l;
+    setStatus("connStatus", "ok", `Connected: ${device.productName || "WB32 bootloader"}, bootloader ${info.bootloaderVersion}, ${info.flashSize / 1024} KB flash.`);
+    log(`connected, chip 0x${info.chipId.toString(16)}, flash ${info.flashSize} bytes`);
+  } catch (e) {
+    const hint = /access|security|claim|open/i.test(e.message)
+      ? " On Windows this usually means the WinUSB driver isn't installed (see Troubleshooting)."
+      : "";
+    setStatus("connStatus", "bad", `Couldn't connect: ${e.message}.${hint}`);
+    log(`connect failed: ${e.message}`);
+  }
+  showFirmwareStatus();
+}
+
+// ---- Flash ----------------------------------------------------------------
+
+function saveFile(bytes, name) {
+  const url = URL.createObjectURL(new Blob([bytes], { type: "application/octet-stream" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
+}
+
+function guardUnload(e) {
+  e.preventDefault();
+  e.returnValue = "";
+}
+
+async function flash() {
+  const { image, name } = chosenImage();
+  if (!loader || !image || busy) return;
+  busy = true;
+  updateFlashButton();
+  $("connect").disabled = true;
+  setStatus("flashStatus", "", "");
+  window.addEventListener("beforeunload", guardUnload);
+  let wakeLock = null;
+  try { wakeLock = await navigator.wakeLock?.request("screen"); } catch (e) { /* not available */ }
+
+  try {
+    if ($("backup").checked) {
+      progress(0, "Saving a backup…");
+      const backup = await loader.read(WB32.FLASH_BASE, info.flashSize);
+      const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+      saveFile(backup, `mk47-backup-${stamp}.bin`);
+      log(`backup saved (${info.flashSize} bytes)`);
+    }
+    log(`flashing ${name}, ${image.length} bytes`);
+    const t0 = performance.now();
+    await loader.flash(image, (done, total) => {
+      progress(done / total, `Writing and checking… page ${done} of ${total}. Don't unplug the keyboard.`);
+    });
+    log(`written and verified in ${((performance.now() - t0) / 1000).toFixed(1)} s`);
+    progress(1, "Restarting the keyboard…");
+    await loader.reset(1000);
+    await loader.close();
+    loader = null;
+    info = null;
+    progress(1, "Done. Flashed and verified.", "done");
+    setStatus("flashStatus", "ok", "Done. The keyboard restarts on its own and comes back as a MIDI keyboard. To flash another, put it in bootloader mode and click Connect again.");
+    setStatus("connStatus", "", "");
+    log("keyboard restarted");
+  } catch (e) {
+    progress(Number($("bar").firstElementChild.style.width.replace("%", "")) / 100, "Stopped.", "failed");
+    setStatus("flashStatus", "bad", `Flashing stopped: ${e.message}. Don't unplug the keyboard. Click Flash firmware to try again, or reload the page and reconnect if it was lost.`);
+    log(`error: ${e.message}`);
+  } finally {
+    window.removeEventListener("beforeunload", guardUnload);
+    if (wakeLock) wakeLock.release().catch(() => {});
+    busy = false;
+    $("connect").disabled = false;
+    updateFlashButton();
+  }
+}
+
+// ---- Setup ----------------------------------------------------------------
+
+(function buildMini() {
+  // Planck MIT layout: 12 x 4 with a 2u key in the middle of the bottom row.
+  for (let i = 0; i < 47; i++) {
+    const s = document.createElement("span");
+    if (i === 0) s.className = "hold";
+    if (i === 41) s.className = "wide";
+    $("mini").appendChild(s);
+  }
+})();
+
+if (!("usb" in navigator)) {
+  $("unsupported").textContent = "This browser can't talk to USB devices. Open this page in Chrome or Edge on a computer.";
+  $("connect").disabled = true;
+} else if (!window.isSecureContext) {
+  $("unsupported").textContent = "USB access needs a secure page. Open this from its https:// address.";
+  $("connect").disabled = true;
+} else {
+  navigator.usb.addEventListener("disconnect", e => {
+    if (loader && e.device === loader.device && !busy) {
+      loader = null;
+      info = null;
+      setStatus("connStatus", "warn", "The keyboard was disconnected.");
+      updateFlashButton();
+    }
+  });
+}
+
+$("connect").addEventListener("click", connect);
+$("flash").addEventListener("click", flash);
+$("file").addEventListener("change", onFile);
+document.querySelectorAll("input[name=src]").forEach(r => r.addEventListener("change", showFirmwareStatus));
+loadLatest();
+</script>
+</body>
+</html>
