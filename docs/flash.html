@@ -146,6 +146,10 @@ summary { cursor: pointer; font-weight: 600; margin-bottom: 6px; }
       </ol>
     </details>
     <details>
+      <summary>"Unable to claim interface"</summary>
+      <p>Another tab or program has hold of the keyboard's bootloader. Close every other tab with this page, quit QMK Toolbox or any other flasher, unplug the keyboard, put it back in bootloader mode and click Connect again. On Windows, also check the driver (above).</p>
+    </details>
+    <details>
       <summary>The browser's list doesn't show the keyboard</summary>
       <ul>
         <li>The keyboard isn't in bootloader mode. If its lights are on, it started normally: unplug it and hold the top-left key while plugging it in.</li>
@@ -446,19 +450,26 @@ async function connect() {
   info = null;
   try {
     const l = new WB32Bootloader(device);
-    await l.open();
-    info = await l.getInfo();
-    if ((info.chipId & 0x3fff) !== WB32.CHIP_ID) {
+    try {
+      await l.open();
+      info = await l.getInfo();
+      if ((info.chipId & 0x3fff) !== WB32.CHIP_ID) {
+        throw new Error(`unexpected chip (id 0x${info.chipId.toString(16)}); this page only flashes the MK47's WB32FQ95`);
+      }
+    } catch (e) {
+      // Let go of the device so a retry, or another tab, can claim it.
       await l.close();
-      throw new Error(`unexpected chip (id 0x${info.chipId.toString(16)}); this page only flashes the MK47's WB32FQ95`);
+      throw e;
     }
     loader = l;
     setStatus("connStatus", "ok", `Connected: ${device.productName || "WB32 bootloader"}, bootloader ${info.bootloaderVersion}, ${info.flashSize / 1024} KB flash.`);
     log(`connected, chip 0x${info.chipId.toString(16)}, flash ${info.flashSize} bytes`);
   } catch (e) {
-    const hint = /access|security|claim|open/i.test(e.message)
-      ? " On Windows this usually means the WinUSB driver isn't installed (see Troubleshooting)."
-      : "";
+    let hint = "";
+    if (/access|security|claim|open/i.test(e.message)) {
+      hint = " Something else is using the keyboard's bootloader: close any other tab with this page and any other flashing tool (QMK Toolbox), then unplug the keyboard, put it back in bootloader mode and click Connect again.";
+      if (/windows/i.test(navigator.userAgent)) hint += " On Windows it can also mean the WinUSB driver isn't installed (see Troubleshooting).";
+    }
     setStatus("connStatus", "bad", `Couldn't connect: ${e.message}.${hint}`);
     log(`connect failed: ${e.message}`);
   }
