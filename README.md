@@ -5,6 +5,9 @@ guitar layout, a looper with overdub and undo, lighting that responds to
 incoming MIDI (for Resolume and similar), and piano-key / fret-marker guide
 lighting.
 
+**Layout page:** <https://gghostdadd.github.io/mk47-midi/layout.html> shows
+both layouts, the shift layer with its colour legend, and the looper lights.
+
 The layout, every shift-layer function and the lighting are documented in the
 keymap's own readme:
 [keyboards/inland/mk47/keymaps/midiboard/readme.md](keyboards/inland/mk47/keymaps/midiboard/readme.md)

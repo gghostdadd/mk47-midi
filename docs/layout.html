@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MK47 MIDI Layout</title>
+<style>
+:root {
+  --bg: #f3f3f1; --panel: #ffffff; --text: #1c1c1c; --muted: #6b6b6b; --line: #deded9;
+  --accent: #2563eb; --accent-text: #ffffff; --input: #ffffff;
+  --case: #121214; --key: #2a2a2d; --key-text: #a0a0a6; --key-blank: #1c1c1f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111214; --panel: #1a1b1e; --text: #e8e8e8; --muted: #9a9a9e; --line: #2d2e33;
+    --accent: #60a5fa; --accent-text: #0b1220; --input: #222327;
+    --case: #08080a; --key: #26262a; --key-text: #9a9aa0; --key-blank: #17171a;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111214; --panel: #1a1b1e; --text: #e8e8e8; --muted: #9a9a9e; --line: #2d2e33;
+  --accent: #60a5fa; --accent-text: #0b1220; --input: #222327;
+  --case: #08080a; --key: #26262a; --key-text: #9a9aa0; --key-blank: #17171a;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 920px; margin: 0 auto; padding: 24px 16px 48px; }
+nav { display: flex; gap: 16px; font-size: 14px; margin-bottom: 18px; }
+nav a { color: var(--accent); text-decoration: none; }
+nav a[aria-current] { color: var(--text); font-weight: 600; }
+h1 { font-size: 24px; margin: 0 0 4px; }
+h2 { font-size: 18px; margin: 0 0 8px; }
+h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 18px 0 8px; }
+p { margin: 0 0 8px; }
+.lede { color: var(--muted); margin-bottom: 20px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+a { color: var(--accent); }
+
+.tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; margin-bottom: 12px; flex-wrap: wrap; }
+.tabs button {
+  font: inherit; border: 0; background: transparent; color: var(--text); padding: 7px 14px;
+  border-radius: 7px; cursor: pointer; min-height: 36px;
+}
+.tabs button[aria-selected="true"] { background: var(--accent); color: var(--accent-text); font-weight: 600; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 12px 20px; align-items: center; justify-content: space-between; }
+label.check { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 12px; }
+.blurb { color: var(--muted); font-size: 14px; margin-bottom: 12px; min-height: 21px; }
+
+.board {
+  display: grid; grid-template-columns: repeat(12, 1fr); gap: 6px;
+  background: var(--case); padding: 12px; border-radius: 12px;
+}
+.key {
+  aspect-ratio: 1; border-radius: 6px; background: var(--key); color: var(--key-text);
+  border: 2px solid transparent; padding: 5px; min-width: 0; text-align: left;
+  display: flex; flex-direction: column; justify-content: space-between;
+  font: 600 12px/1.1 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  cursor: default; transition: background-color .12s, border-color .12s;
+}
+.key.wide { aspect-ratio: auto; }
+.key small { font-weight: 400; font-size: 10px; opacity: .75; }
+.key.blank { background: var(--key-blank); color: #55555b; }
+.key.fn { cursor: pointer; }
+.key.fn:hover, .key.active { border-color: #ffffff; }
+.key.light-bg { color: #111; }
+.key.dark-bg { color: #f4f4f4; }
+.key.dim { opacity: .25; }
+
+.info {
+  margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
+  min-height: 70px; background: var(--bg);
+}
+.info b { display: block; margin-bottom: 2px; }
+.info span { color: var(--muted); }
+
+.legend { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); gap: 2px 24px; }
+.legend button {
+  display: grid; grid-template-columns: 18px 90px 1fr; gap: 10px; align-items: start;
+  font: inherit; text-align: left; color: var(--text); background: none; border: 0;
+  padding: 6px 4px; border-radius: 6px; cursor: pointer;
+}
+.legend button:hover, .legend button.active { background: var(--bg); }
+.legend .chip { width: 18px; height: 18px; border-radius: 4px; margin-top: 1px; }
+.legend .name { font-weight: 600; }
+.legend .what { color: var(--muted); font-size: 14px; }
+
+.states { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.state { display: flex; align-items: center; gap: 10px; }
+.state .led { width: 30px; height: 30px; border-radius: 6px; background: var(--key); flex: none; border: 1px solid #00000033; }
+.blink { animation: blink .5s steps(1) infinite; }
+@keyframes blink { 50% { background: var(--key); } }
+
+ul { margin: 0 0 8px; padding-left: 20px; }
+li { margin-bottom: 4px; }
+
+@media (max-width: 640px) {
+  .board { gap: 3px; padding: 6px; }
+  .key { padding: 2px; font-size: 7px; border-radius: 4px; overflow: hidden; }
+  .key small { display: none; }
+  .legend button { grid-template-columns: 18px 76px 1fr; }
+}
+</style>
+</head>
+<body>
+<main>
+  <nav><a href="layout.html" aria-current="page">Layout</a><a href="./">Light test</a><a href="flash.html">Flash firmware</a></nav>
+  <h1>MK47 MIDI Layout</h1>
+  <p class="lede">What every key does on the MK47 MIDI firmware. Hold the bottom-right key (SHIFT) for the function layer.</p>
+
+  <section class="panel">
+    <div class="toolbar">
+      <div class="tabs" role="tablist" id="tabs">
+        <button role="tab" data-view="chromatic" aria-selected="true">Chromatic</button>
+        <button role="tab" data-view="bass" aria-selected="false">Bass guitar</button>
+        <button role="tab" data-view="shift" aria-selected="false">Shift</button>
+      </div>
+      <label class="check" id="guideWrap"><input type="checkbox" id="guide"> Show guide lighting (SHIFT + LIGHT)</label>
+    </div>
+    <p class="blurb" id="blurb"></p>
+    <div class="board" id="board"></div>
+    <div class="info" id="info"></div>
+    <div id="legendWrap"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Looper status light</h2>
+    <p class="blurb">The SHIFT key (bottom right) shows what the looper is doing.</p>
+    <div class="states">
+      <div class="state"><span class="led blink" style="background:#ff0000"></span>Armed, waiting for the first note</div>
+      <div class="state"><span class="led" style="background:#ff0000"></span>Recording or overdubbing</div>
+      <div class="state"><span class="led" style="background:#00ff00"></span>Loop playing</div>
+      <div class="state"><span class="led" style="background:#ff5500"></span>Loop stopped, still in memory</div>
+      <div class="state"><span class="led"></span>No loop</div>
+    </div>
+    <h3>Recording a loop</h3>
+    <ul>
+      <li>SHIFT + REC/OV arms the looper. Recording starts on your first note.</li>
+      <li>SHIFT + REC/OV again closes the loop and it starts playing.</li>
+      <li>While it plays, SHIFT + REC/OV punches overdub in and out. UNDO removes the most recent overdub (repeat for earlier ones).</li>
+      <li>With a loop stopped, SHIFT + REC/OV starts it with overdub on.</li>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <h2>Lighting keys from MIDI</h2>
+    <p>A note-on sent to the keyboard lights every key currently playing that note. The velocity picks the colour from the Launchpad 128-colour palette; velocity 0 turns it off, and note-offs are ignored. Colours are kept per MIDI channel and shown for the channel the keyboard is sending on. Try it with the <a href="./">light test</a>.</p>
+    <p>SHIFT + LEDOFF clears every colour set over MIDI, on all channels, if Resolume leaves lights behind.</p>
+  </section>
+
+  <section class="panel">
+    <h2>Good to know</h2>
+    <ul>
+      <li>The wide key is <b>Enter</b> when the keyboard is plugged in. SHIFT + ENT/SP switches it to Space. On the bass layout it plays A1.</li>
+      <li>Note names are QMK's: C1 is MIDI note 60 (middle C) at the default octave, lower than the usual naming. SHIFT + KOCT-/+ moves the whole keyboard by octaves.</li>
+      <li>Bootloader mode for flashing: hold the top-left key while plugging the keyboard in. Then use the <a href="flash.html">flasher</a>.</li>
+    </ul>
+  </section>
+</main>
+
+<script>
+const NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const noteName = n => NAMES[n % 12] + (Math.floor(n / 12) - 4); // QMK naming: 60 is C1
+
+// Function groups and their legend colours (the colours the keys light while
+// SHIFT is held, from legend_color() in keymap.c).
+const GROUPS = { midi: "MIDI", looper: "Looper", lights: "Lights" };
+const FN = {
+  "CH1":    { group: "midi",   color: "#ffffff", what: "Change to that MIDI channel (CH1 to CH10). The current channel lights white, the others blue." },
+  "CH":     { group: "midi",   color: "#0028ff" },
+  "CH-":    { group: "midi",   color: "#0028ff", what: "Step the MIDI channel down." },
+  "CH+":    { group: "midi",   color: "#0028ff", what: "Step the MIDI channel up." },
+  "KOCT-":  { group: "midi",   color: "#00ffff", what: "Shift the whole keyboard down an octave." },
+  "KOCT+":  { group: "midi",   color: "#00ffff", what: "Shift the whole keyboard up an octave." },
+  "BASS":   { group: "midi",   color: "#78ff00", what: "Switch between the chromatic and bass guitar layouts." },
+  "ENT/SP": { group: "midi",   color: "#00a0a0", what: "Switch the wide key on the chromatic layout between Enter and Space. Starts as Enter; lights teal for Enter, yellow for Space while SHIFT is held." },
+  "REC/OV": { group: "looper", color: "#ff0000", what: "Record / overdub. No loop: arm, and recording starts on your first note; press again to loop it. While playing: punch overdub in and out. Loop stopped: start it with overdub on." },
+  "PLAY":   { group: "looper", color: "#00ff00", what: "Stop the loop, or start it again from the top." },
+  "CLEAR":  { group: "looper", color: "#ff5000", what: "Stop and erase the loop." },
+  "UNDO":   { group: "looper", color: "#ffc878", what: "Remove the most recent overdub (repeat for earlier ones)." },
+  "HALF":   { group: "looper", color: "#ffff00", what: "Halve the loop speed (up to 5 times)." },
+  "DOUBLE": { group: "looper", color: "#ffff00", what: "Double the loop speed (up to 5 times)." },
+  "LOCT-":  { group: "looper", color: "#ff00ff", what: "Transpose the loop down an octave." },
+  "LOCT+":  { group: "looper", color: "#ff00ff", what: "Transpose the loop up an octave." },
+  "LSEM-":  { group: "looper", color: "#ff3c78", what: "Transpose the loop down a semitone." },
+  "LSEM+":  { group: "looper", color: "#ff3c78", what: "Transpose the loop up a semitone." },
+  "LEDOFF": { group: "lights", color: "#ff0028", what: "Clear every colour set over MIDI, on all channels (for lights left hanging in Resolume)." },
+  "LIGHT":  { group: "lights", color: "#ffffff", what: "Toggle guide lighting: piano keys on the chromatic layout, fret dots on the bass layout." },
+  "RGBMOD": { group: "lights", color: "#7800ff", what: "Next RGB mode: dark mode first (MIDI sets the lighting), then the built-in colour effects." },
+  "HUE+":   { group: "lights", color: "#7800ff", what: "Shift the RGB effect's colour." },
+  "BRI-":   { group: "lights", color: "#7800ff", what: "LED brightness down." },
+  "BRI+":   { group: "lights", color: "#7800ff", what: "LED brightness up." },
+  "FX-":    { group: "lights", color: "#7800ff", what: "RGB effect animation slower." },
+  "FX+":    { group: "lights", color: "#7800ff", what: "RGB effect animation faster." },
+};
+
+// Shift layer (layer 2 of keymap.c), top row first. "" is a key with no
+// function there (it still plays its note). The bottom row's 6th entry is the
+// wide key.
+const SHIFT = [
+  ["CH1", "CH2", "CH3", "CH4", "CH5", "CH6", "CH7", "CH8", "CH9", "CH10", "BASS", "RGBMOD"],
+  ["HUE+", "CH-", "CH+", "", "", "", "LEDOFF", "FX-", "FX+", "BRI-", "BRI+", "LIGHT"],
+  ["LSEM-", "LSEM+", "LOCT-", "LOCT+", "", "ENT/SP", "", "", "", "", "", ""],
+  ["KOCT-", "KOCT+", "HALF", "DOUBLE", "CLEAR", "PLAY", "", "", "UNDO", "REC/OV", "SHIFT"],
+];
+const fnFor = label => FN[label] || (/^CH\d+$/.test(label) ? { ...FN["CH"], what: FN["CH1"].what } : null);
+
+// Physical keys, top row first; the bottom row has 11 keys with the wide key 6th.
+function keys() {
+  const out = [];
+  for (let r = 0; r < 4; r++) {
+    const rowFromBottom = 3 - r;
+    const count = rowFromBottom === 0 ? 11 : 12;
+    for (let i = 0; i < count; i++) {
+      const col = rowFromBottom === 0 && i > 5 ? i + 1 : i; // column of the key's left edge
+      out.push({ r, rowFromBottom, i, col, wide: rowFromBottom === 0 && i === 5, shift: rowFromBottom === 0 && i === 10 });
+    }
+  }
+  return out;
+}
+const KEYS = keys();
+
+let view = "chromatic";
+let selected = null;
+
+const BLURBS = {
+  chromatic: "Each row is one octave, C to B, lowest at the bottom. Small numbers are MIDI note numbers at the default octave.",
+  bass: "Each row is a fourth above the one below, like bass strings E A D G. Each column is a fret, open strings on the left.",
+  shift: "Hold SHIFT (bottom right) and press a coloured key. Keys light in these colours while SHIFT is held. Dark keys still play their note.",
+};
+
+function noteFor(k) {
+  if (view === "bass") return 64 + 5 * k.rowFromBottom + k.col;
+  if (k.wide) return null;
+  return 60 + 12 * k.rowFromBottom + k.col;
+}
+
+// Guide lighting colours, matching rgb_matrix_indicators_user().
+function guideColor(k, n) {
+  if (!$("guide").checked || n === null) return null;
+  if (view === "bass") {
+    if (k.col === 0) return "#ff5500";
+    if ([3, 5, 7, 9].includes(k.col)) return "#ffffff";
+    return null;
+  }
+  const pc = n % 12;
+  if (pc === 0) return "#0080ff";
+  return [1, 3, 6, 8, 10].includes(pc) ? null : "#ffffff";
+}
+
+function isLight(hex) {
+  const v = parseInt(hex.slice(1), 16);
+  return 0.299 * (v >> 16) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255) > 150;
+}
+
+const $ = id => document.getElementById(id);
+
+function render() {
+  const board = $("board");
+  board.innerHTML = "";
+  for (const k of KEYS) {
+    const el = document.createElement(view === "shift" ? "button" : "div");
+    el.className = "key" + (k.wide ? " wide" : "");
+    el.style.gridRow = String(k.r + 1);
+    el.style.gridColumn = k.wide ? `${k.col + 1} / span 2` : String(k.col + 1);
+    let label = "", sub = "", color = null;
+
+    if (view === "shift") {
+      label = SHIFT[k.r][k.i];
+      const fn = label && fnFor(label);
+      if (k.shift) { label = "SHIFT"; sub = "held"; }
+      else if (fn) {
+        color = fn.color;
+        el.classList.add("fn");
+        el.addEventListener("click", () => select(label));
+        el.addEventListener("mouseenter", () => showInfo(label));
+        el.addEventListener("mouseleave", () => showInfo(selected));
+        el.dataset.fn = label;
+        el.dataset.group = fn.group;
+      } else {
+        el.classList.add("blank");
+      }
+    } else if (k.shift) {
+      label = "SHIFT";
+      sub = "hold";
+    } else {
+      const n = noteFor(k);
+      if (n === null) { label = "ENTER"; sub = "or Space"; }
+      else { label = noteName(n); sub = String(n); color = guideColor(k, n); }
+    }
+
+    el.innerHTML = `<span>${label}</span><small>${sub}</small>`;
+    if (color) {
+      el.style.background = color;
+      el.classList.add(isLight(color) ? "light-bg" : "dark-bg");
+    }
+    board.appendChild(el);
+  }
+  highlight();
+}
+
+function showInfo(label) {
+  const info = $("info");
+  if (view !== "shift") {
+    info.innerHTML = view === "bass"
+      ? "<b>Bass guitar layout</b><span>Turn it on with SHIFT + BASS. The wide key plays A1, and some notes appear on two strings, like a real bass.</span>"
+      : "<b>Chromatic layout</b><span>The default when the keyboard is plugged in. The wide key types Enter (or Space, see SHIFT + ENT/SP) rather than playing a note.</span>";
+    return;
+  }
+  const fn = label && fnFor(label);
+  info.innerHTML = fn
+    ? `<b>SHIFT + ${/^CH\d+$/.test(label) ? "CH1 to CH10" : label}</b><span>${fn.what}</span>`
+    : "<b>Tap or hover a key</b><span>to see what it does, or pick one from the list below.</span>";
+}
+
+function select(label) {
+  selected = selected === label ? null : label;
+  showInfo(selected);
+  highlight();
+}
+
+// Highlights the selected function on the board and in the list.
+function highlight() {
+  const sameFn = el => selected && (el.dataset.fn === selected || (/^CH\d+$/.test(selected) && /^CH\d+$/.test(el.dataset.fn || "")));
+  document.querySelectorAll(".key.fn").forEach(el => {
+    el.classList.toggle("active", !!sameFn(el));
+    el.classList.toggle("dim", !!selected && !sameFn(el));
+  });
+  document.querySelectorAll(".legend button").forEach(b => b.classList.toggle("active", b.dataset.fn === selected));
+}
+
+function renderLegend() {
+  const wrap = $("legendWrap");
+  wrap.innerHTML = "";
+  if (view !== "shift") return;
+  const order = ["CH1", "CH-", "CH+", "KOCT-", "KOCT+", "BASS", "ENT/SP",
+    "REC/OV", "PLAY", "CLEAR", "UNDO", "HALF", "DOUBLE", "LOCT-", "LOCT+", "LSEM-", "LSEM+",
+    "LEDOFF", "LIGHT", "RGBMOD", "HUE+", "BRI-", "BRI+", "FX-", "FX+"];
+  for (const g of Object.keys(GROUPS)) {
+    const h = document.createElement("h3");
+    h.textContent = GROUPS[g];
+    wrap.appendChild(h);
+    const list = document.createElement("div");
+    list.className = "legend";
+    for (const name of order.filter(n => FN[n].group === g)) {
+      const b = document.createElement("button");
+      b.dataset.fn = name;
+      const chip = name === "CH1" ? "linear-gradient(90deg, #ffffff 50%, #0028ff 50%)" : FN[name].color;
+      b.innerHTML = `<span class="chip" style="background:${chip}"></span><span class="name">${name === "CH1" ? "CH1–CH10" : name}</span><span class="what">${FN[name].what}</span>`;
+      b.addEventListener("click", () => select(name));
+      list.appendChild(b);
+    }
+    wrap.appendChild(list);
+  }
+}
+
+function setView(v) {
+  view = v;
+  selected = null;
+  document.querySelectorAll("#tabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.view === v)));
+  $("guideWrap").style.visibility = v === "shift" ? "hidden" : "visible";
+  $("blurb").textContent = BLURBS[v];
+  render();
+  renderLegend();
+  showInfo(null);
+  try { history.replaceState(null, "", "#" + v); } catch (e) { /* file:// */ }
+}
+
+document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
+$("guide").addEventListener("change", render);
+setView(["chromatic", "bass", "shift"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "chromatic");
+</script>
+</body>
+</html>
