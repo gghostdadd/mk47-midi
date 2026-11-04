@@ -68,6 +68,21 @@ label.check { display: flex; align-items: center; gap: 8px; font-size: 14px; mar
 .key.light-bg { color: #111; }
 .key.dark-bg { color: #f4f4f4; }
 .key.dim { opacity: .25; }
+.key.pressed {
+  background: #22c55e !important; color: #0b1a10 !important; border-color: #ffffff;
+  transform: scale(.94); box-shadow: 0 0 0 3px #22c55e66;
+}
+
+.listen { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; margin-bottom: 14px; font-size: 14px; }
+.listen button, .listen select {
+  font: inherit; color: var(--text); background: var(--input); border: 1px solid var(--line);
+  border-radius: 8px; padding: 6px 12px; min-height: 34px; cursor: pointer;
+}
+.listen button:hover { border-color: var(--accent); }
+.listen .live { color: var(--muted); }
+.listen .live b { color: var(--text); font-variant-numeric: tabular-nums; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--line); flex: none; }
+.dot.on { background: #22c55e; box-shadow: 0 0 0 3px #22c55e33; }
 
 .info {
   margin-top: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px;
@@ -111,6 +126,12 @@ li { margin-bottom: 4px; }
   <p class="lede">What every key does on the MK47 MIDI firmware. Hold the bottom-right key (SHIFT) for the function layer.</p>
 
   <section class="panel">
+    <div class="listen">
+      <span class="dot" id="dot"></span>
+      <button id="listen">Listen to my MK47</button>
+      <select id="inputSel" hidden aria-label="MIDI input"></select>
+      <span class="live" id="live">Shows the keys you play and the MIDI channel you're on. Chrome or Edge.</span>
+    </div>
     <div class="toolbar">
       <div class="tabs" role="tablist" id="tabs">
         <button role="tab" data-view="chromatic" aria-selected="true">Chromatic</button>
@@ -224,17 +245,35 @@ const KEYS = keys();
 
 let view = "chromatic";
 let selected = null;
+let octave = 0;           // KOCT shift, worked out from the notes played
+let channel = 0;          // MIDI channel the keyboard is sending on (0 = CH1)
+let channelSeen = false;
+let lastNote = null;
+const held = new Map();   // note -> number of keys holding it
 
 const BLURBS = {
-  chromatic: "Each row is one octave, C to B, lowest at the bottom. Small numbers are MIDI note numbers at the default octave.",
+  chromatic: "Each row is one octave, C to B, lowest at the bottom. Small numbers are MIDI note numbers.",
   bass: "Each row is a fourth above the one below, like bass strings E A D G. Each column is a fret, open strings on the left.",
   shift: "Hold SHIFT (bottom right) and press a coloured key. Keys light in these colours while SHIFT is held. Dark keys still play their note.",
 };
 
-function noteFor(k) {
-  if (view === "bass") return 64 + 5 * k.rowFromBottom + k.col;
-  if (k.wide) return null;
-  return 60 + 12 * k.rowFromBottom + k.col;
+function noteFor(k, oct = octave) {
+  let n;
+  if (view === "bass") n = 64 + 5 * k.rowFromBottom + k.col;
+  else if (k.wide) return null;
+  else n = 60 + 12 * k.rowFromBottom + k.col;
+  n += 12 * oct;
+  return n >= 0 && n <= 127 ? n : null;
+}
+
+// If a played note isn't on the board, the keyboard must be shifted with
+// KOCT; move to the nearest octave that has it.
+function fitOctave(n) {
+  const has = o => KEYS.some(k => !k.shift && noteFor(k, o) === n);
+  if (view === "shift" || has(octave)) return;
+  for (let d = 1; d <= 10; d++) {
+    for (const o of [octave - d, octave + d]) if (has(o)) { octave = o; return; }
+  }
 }
 
 // Guide lighting colours, matching rgb_matrix_indicators_user().
@@ -272,7 +311,7 @@ function render() {
       const fn = label && fnFor(label);
       if (k.shift) { label = "SHIFT"; sub = "held"; }
       else if (fn) {
-        color = fn.color;
+        color = /^CH\d+$/.test(label) ? (label === `CH${channel + 1}` ? "#ffffff" : "#0028ff") : fn.color;
         el.classList.add("fn");
         el.addEventListener("click", () => select(label));
         el.addEventListener("mouseenter", () => showInfo(label));
@@ -288,7 +327,12 @@ function render() {
     } else {
       const n = noteFor(k);
       if (n === null) { label = "ENTER"; sub = "or Space"; }
-      else { label = noteName(n); sub = String(n); color = guideColor(k, n); }
+      else {
+        label = noteName(n);
+        sub = String(n);
+        color = guideColor(k, n);
+        if (held.has(n)) el.classList.add("pressed");
+      }
     }
 
     el.innerHTML = `<span>${label}</span><small>${sub}</small>`;
@@ -367,6 +411,98 @@ function setView(v) {
   showInfo(null);
   try { history.replaceState(null, "", "#" + v); } catch (e) { /* file:// */ }
 }
+
+// ---- Listening to the keyboard ----------------------------------------------
+// Only uses the notes the keyboard already sends: SHIFT, BASS and the other
+// function keys send nothing over MIDI, so the tabs stay manual.
+
+let midi = null, input = null;
+
+function updateLive() {
+  $("dot").classList.toggle("on", !!input);
+  if (!midi) return;
+  if (!input) {
+    $("live").textContent = "No MIDI input found. Plug in the MK47; it's picked up automatically.";
+    return;
+  }
+  const oct = octave === 0 ? "0" : (octave > 0 ? `+${octave}` : String(octave));
+  $("live").innerHTML = `Listening to <b>${input.name}</b> · Channel <b>${channelSeen ? channel + 1 : "?"}</b>`
+    + ` · Octave <b>${oct}</b>`
+    + (lastNote === null ? " · Play a note" : ` · Last note <b>${noteName(lastNote)}</b> (${lastNote})`);
+}
+
+function onMessage(e) {
+  const [status, note, vel] = e.data;
+  const type = status & 0xf0;
+  if (type === 0x90 && vel > 0) {
+    held.set(note, (held.get(note) || 0) + 1);
+    channel = status & 0x0f;
+    channelSeen = true;
+    lastNote = note;
+    fitOctave(note);
+  } else if (type === 0x80 || type === 0x90) {
+    const count = (held.get(note) || 0) - 1;
+    if (count > 0) held.set(note, count); else held.delete(note);
+  } else {
+    return;
+  }
+  render();
+  updateLive();
+}
+
+async function useInput(id) {
+  if (input && input.id === id) return;
+  if (input) input.onmidimessage = null;
+  input = null;
+  held.clear();
+  const port = id && midi.inputs.get(id);
+  if (port) {
+    try {
+      await port.open();
+      port.onmidimessage = onMessage;
+      input = port;
+    } catch (e) {
+      $("live").textContent = `Couldn't open ${port.name}: another program may be using it. Close it and reload.`;
+      return;
+    }
+  }
+  render();
+  updateLive();
+}
+
+function pickInput() {
+  const sel = $("inputSel");
+  const keep = sel.value;
+  const ports = [...midi.inputs.values()].filter(p => p.state === "connected");
+  sel.innerHTML = "";
+  for (const p of ports) sel.add(new Option(p.name, p.id));
+  const mk47 = ports.find(p => /mk47/i.test(p.name));
+  if (ports.some(p => p.id === keep)) sel.value = keep;
+  else if (mk47) sel.value = mk47.id;
+  sel.hidden = ports.length < 2;
+  useInput(sel.value);
+}
+
+async function listen() {
+  if (!navigator.requestMIDIAccess) {
+    $("live").textContent = "This browser can't listen to MIDI. Use Chrome or Edge.";
+    return;
+  }
+  try {
+    midi = await navigator.requestMIDIAccess();
+  } catch (e) {
+    $("live").textContent = `MIDI access was refused (${e.message}). Allow MIDI devices for this site and reload.`;
+    return;
+  }
+  $("listen").hidden = true;
+  midi.onstatechange = pickInput;
+  pickInput();
+}
+
+$("listen").addEventListener("click", listen);
+$("inputSel").addEventListener("change", e => useInput(e.target.value));
+// Start straight away if MIDI was allowed on an earlier visit.
+navigator.permissions?.query({ name: "midi" }).then(s => { if (s.state === "granted") listen(); }).catch(() => {});
 
 document.querySelectorAll("#tabs button").forEach(b => b.addEventListener("click", () => setView(b.dataset.view)));
 $("guide").addEventListener("change", render);
